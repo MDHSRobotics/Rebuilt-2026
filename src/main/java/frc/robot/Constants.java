@@ -1,10 +1,12 @@
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 import static edu.wpi.first.units.Units.RadiansPerSecond;
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
-import frc.robot.generated.TunerConstants;
+import frc.robot.subsystems.drive.TunerConstants;
 
 public final class Constants {
   private Constants() {}
@@ -24,5 +26,20 @@ public final class Constants {
 
     public static final int DRIVER_CONTROLLER_PORT = 0;
     public static final int OPERATOR_CONTROLLER_PORT = 1;
+  }
+
+  public static class VisionConstants {
+    private VisionConstants() {}
+
+    public static final String FRONT_LIMELIGHT_NAME = "limelight";
+
+    /** Distance from the center of the robot to the front limelight lens in meters */
+    public static final double FRONT_LIMELIGHT_FORWARD_DISTANCE = Inches.of(0).in(Meters);
+
+    /** Distance from the floor to the front limelight lens in meters */
+    public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(0).in(Meters);
+
+    /** Units: Degrees */
+    public static final double FRONT_LIMELIGHT_PITCH = 0;
   }
 }

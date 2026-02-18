@@ -4,8 +4,6 @@
 
 package frc.robot;
 
-import static edu.wpi.first.units.Units.*;
-
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -13,18 +11,15 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
-import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drive.DriveTelemetry;
+import frc.robot.subsystems.drive.TunerConstants;
 
 public class RobotContainer {
   // Robot Speed from 0% to 100%
   private double m_robotSpeed = 1.0 * Constants.MAX_LINEAR_SPEED;
 
   private double m_angularVelocity = Constants.MAX_ANGULAR_VELOCITY;
-
-  // Drive Telemetry'
-  private final DriveTelemetry m_driveTelemetry = new DriveTelemetry();
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric m_drive =
@@ -36,7 +31,7 @@ public class RobotContainer {
   private final SwerveRequest.SwerveDriveBrake brake = new SwerveRequest.SwerveDriveBrake();
   private final SwerveRequest.PointWheelsAt point = new SwerveRequest.PointWheelsAt();
 
-  private final Telemetry logger = new Telemetry(m_robotSpeed);
+  private final DriveTelemetry m_logger = new DriveTelemetry(m_robotSpeed);
 
   /* Controllers  */
   private final CommandPS4Controller m_driverController =
@@ -109,7 +104,7 @@ public class RobotContainer {
     // Reset the field-centric heading on left bumper press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
 
-    m_drivetrain.registerTelemetry(logger::telemeterize);
+    m_drivetrain.registerTelemetry(m_logger::telemeterize);
   }
 
   /** Use this method to map driver controls and commands */
