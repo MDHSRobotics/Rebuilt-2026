@@ -5,8 +5,12 @@ import static edu.wpi.first.units.Units.*;
 import com.ctre.phoenix6.SignalLogger;
 import com.ctre.phoenix6.Utils;
 import com.ctre.phoenix6.swerve.SwerveDrivetrainConstants;
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveModuleConstants;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -41,6 +45,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private static final Rotation2d kRedAlliancePerspectiveRotation = Rotation2d.k180deg;
   /* Keep track if we've ever applied the operator perspective before or not */
   private boolean m_hasAppliedOperatorPerspective = false;
+  /*Swerve request to apply during robot-centric path following */
+  private final SwerveRequest.ApplyRobotSpeeds m_pathApplyRobotSpeeds =
+      new SwerveRequest.ApplyRobotSpeeds()
+          .withDriveRequestType(DriveRequestType.Velocity)
+          .withSteerRequestType(SteerRequestType.MotionMagicExpo);
 
   /* Swerve requests to apply during SysId characterization */
   private final SwerveRequest.SysIdSwerveTranslation m_translationCharacterization =
@@ -117,6 +126,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
+    configureAutoBuilder();
   }
 
   /**
@@ -138,6 +148,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
+    configureAutoBuilder();
   }
 
   /**
@@ -170,6 +181,29 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     if (Utils.isSimulation()) {
       startSimThread();
     }
+    configureAutoBuilder();
+  }
+
+  private void configureAutoBuilder() {
+    AutoBuilder.configure(
+        () -> getState().Pose, // Supplier of current robot pose
+        this::resetPose, // Consumer for seeding pose against auto
+        () -> getState().Speeds, // Supplier of current robot speeds
+        // Consumer of ChassisSpeeds and feedforwards to drive the robot
+        (speeds, feedforwards) -> {
+          ;
+          setControl(
+              m_pathApplyRobotSpeeds
+                  .withSpeeds(speeds)
+                  .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
+                  .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons()));
+        },
+        new PPHolonomicDriveController(DriveConstants.TRANSLATION_PID, DriveConstants.ROTATION_PID),
+        DriveConstants.PATHPLANNER_CONFIG,
+        // Assume the path needs to be flipped for Red vs Blue, this is normally the case
+        () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
+        this // Subsystem for requirements
+        );
   }
 
   /**

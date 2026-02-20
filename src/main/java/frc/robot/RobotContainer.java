@@ -12,14 +12,15 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveTelemetry;
 import frc.robot.subsystems.drive.TunerConstants;
 
 public class RobotContainer {
   // Robot Speed from 0% to 100%
-  private double m_robotSpeed = 1.0 * Constants.MAX_LINEAR_SPEED;
+  private double m_robotSpeed = 1.0 * DriveConstants.MAX_LINEAR_SPEED;
 
-  private double m_angularVelocity = Constants.MAX_ANGULAR_VELOCITY;
+  private double m_angularVelocity = DriveConstants.MAX_ANGULAR_VELOCITY;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric m_drive =

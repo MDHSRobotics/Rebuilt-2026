@@ -130,6 +130,7 @@ public class DriveTelemetry {
     m_megatag2FrontUpdater.set(m_megatag2Orientation, timestampMicroseconds);
     // Flushing is ESSENTIAL for the limelight to receive accurate yaw and give accurate pose
     // estimates.
+    m_inst.flush();
 
     /* Telemeterize the swerve drive state */
     m_drivePosePub.set(state.Pose, timestampMicroseconds);
