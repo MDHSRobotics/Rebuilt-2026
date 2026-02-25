@@ -7,7 +7,11 @@ import edu.wpi.first.networktables.IntegerSubscriber;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructPublisher;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.Constants;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -21,12 +25,6 @@ public class AimingCommand {
   private final DoubleSupplier m_velocityXSupplier;
   private final DoubleSupplier m_velocityYSupplier;
   private final DoubleSupplier m_deadbandSupplier;
-
-  // Joystick suppliers
-  private final DoubleSupplier m_leftYSupplier;
-  private final DoubleSupplier m_leftXSupplier;
-  private final DoubleSupplier m_rightYSupplier;
-  private final DoubleSupplier m_rightXSupplier;
 
   // NetworkTables
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
@@ -82,18 +80,50 @@ public class AimingCommand {
       CommandSwerveDrivetrain drivetrain,
       DoubleSupplier velocityXSupplier,
       DoubleSupplier velocityYSupplier,
-      DoubleSupplier deadbandSupplier,
-      DoubleSupplier leftYSupplier,
-      DoubleSupplier leftXSupplier,
-      DoubleSupplier rightYSupplier,
-      DoubleSupplier rightXSupplier) {
+      DoubleSupplier deadbandSupplier) {
     m_drivetrain = drivetrain;
     m_velocityXSupplier = velocityXSupplier;
     m_velocityYSupplier = velocityYSupplier;
     m_deadbandSupplier = deadbandSupplier;
-    m_leftYSupplier = leftYSupplier;
-    m_leftXSupplier = leftXSupplier;
-    m_rightYSupplier = rightYSupplier;
-    m_rightXSupplier = rightXSupplier;
+  }
+
+  public Command alignWithTower() {
+    return m_drivetrain.startRun(
+        () -> {
+          // Must call reset before using this swerve request
+          m_driveFacingAngle.resetRequest();
+          Alliance alliance = DriverStation.getAlliance().orElseThrow();
+          if (alliance == Alliance.Blue) {
+            m_driveFacingAngle.withTargetDirection(FieldConstants.APRILTAG_ROTATIONS[31]);
+          } else if (alliance == Alliance.Red) {
+            m_driveFacingAngle.withTargetDirection(FieldConstants.APRILTAG_ROTATIONS[15]);
+          }
+        },
+        () ->
+            m_drivetrain.setControl(
+                m_driveFacingAngle
+                    .withVelocityX(m_velocityXSupplier.getAsDouble())
+                    .withVelocityY(m_velocityYSupplier.getAsDouble())
+                    .withDeadband(m_deadbandSupplier.getAsDouble())));
+  }
+
+  public Command alignWithHub() {
+    return m_drivetrain.startRun(
+        () -> {
+          // Must call reset before using this swerve request
+          m_driveFacingAngle.resetRequest();
+          Alliance alliance = DriverStation.getAlliance().orElseThrow();
+          if (alliance == Alliance.Blue) {
+            m_driveFacingAngle.withTargetDirection(FieldConstants.APRILTAG_ROTATIONS[25]);
+          } else if (alliance == Alliance.Red) {
+            m_driveFacingAngle.withTargetDirection(FieldConstants.APRILTAG_ROTATIONS[9]);
+          }
+        },
+        () ->
+            m_drivetrain.setControl(
+                m_driveFacingAngle
+                    .withVelocityX(m_velocityXSupplier.getAsDouble())
+                    .withVelocityY(m_velocityYSupplier.getAsDouble())
+                    .withDeadband(m_deadbandSupplier.getAsDouble())));
   }
 }

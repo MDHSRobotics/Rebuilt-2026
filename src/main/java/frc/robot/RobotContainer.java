@@ -10,7 +10,10 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import frc.robot.Constants.ControllerConstants;
+import frc.robot.commands.AimingCommand;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveTelemetry;
@@ -36,9 +39,14 @@ public class RobotContainer {
 
   /* Controllers  */
   private final CommandPS4Controller m_driverController =
-      new CommandPS4Controller(Constants.ControllerConstants.DRIVER_CONTROLLER_PORT);
+      new CommandPS4Controller(ControllerConstants.DRIVER_CONTROLLER_PORT);
+  private final CommandXboxController m_operatorController =
+      new CommandXboxController(ControllerConstants.OPERATOR_CONTROLLER_PORT);
 
   public final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
+
+  private final AimingCommand m_aimingCommands =
+      new AimingCommand(m_drivetrain, this::getVelocityX, this::getVelocityY, this::getDeadband);
 
   public RobotContainer() {
     setDefaultCommands();
@@ -107,7 +115,11 @@ public class RobotContainer {
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
   }
 
-  /** Use this method to map driver controls and commands */
+  /**
+   * Use this method to map driver controls and commands please use <a href="
+   * https://www.padcrafter.com/?templates=Driver+Controller&plat=1&leftStick=Drive&aButton=Lock+wheels&xButton=Re-enable+manual+driving&yButton=Face+processor&leftBumper=Face+Left+Coral+Station&backButton=Reset+robot+orientation&rightBumper=Face+Right+Coral+Station&bButton=Face+reef+wall&leftTrigger=Slow+Mode&rightTrigger=Super+Slow+Mode&dpadLeft=&rightStick=Rotate&dpadDown=Climb&dpadUp=Raise+climb
+   * ">this controller map</a> to update and view the current controls.
+   */
   private void configureDriverControllers() {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
@@ -132,7 +144,17 @@ public class RobotContainer {
     m_driverController.R2().onTrue(Commands.runOnce(() -> m_robotSpeed = 0.25));
 
     m_driverController.R2().onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
+
+    m_driverController.cross().whileTrue(m_aimingCommands.alignWithHub());
+    m_driverController.circle().whileTrue(m_aimingCommands.alignWithTower());
   }
+
+  /**
+   * Use this method to map operator controller controls and commands please use <a href="
+   * https://www.padcrafter.com/?templates=Driver+Controller&plat=1&rightTrigger=Quarter+Speed&leftStick=Drive&rightStick=Rotate&aButton=Align+with+Hub&bButton=Align+with+Tower
+   * ">this controller map</a> to update and view the current controls.
+   */
+  private void configureOperatorControllers() {}
 
   public Command getAutonomousCommand() {
     // Simple drive forward auton
@@ -167,5 +189,17 @@ public class RobotContainer {
    */
   public double getRotationalDeadband() {
     return m_angularVelocity * 0.1;
+  }
+
+  public double getVelocityX() {
+    return -m_driverController.getLeftY() * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
+  }
+
+  public double getVelocityY() {
+    return -m_driverController.getLeftX() * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
+  }
+
+  public double getRotationalRate() {
+    return -m_driverController.getRightX() * DriveConstants.MAX_ANGULAR_VELOCITY * m_robotSpeed;
   }
 }

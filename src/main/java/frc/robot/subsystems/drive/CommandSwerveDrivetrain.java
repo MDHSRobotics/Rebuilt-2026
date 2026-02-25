@@ -172,6 +172,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       startSimThread();
     }
     configureAutoBuilder();
+    registerPoseEstimateListeners();
   }
 
   /**
@@ -194,6 +195,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       startSimThread();
     }
     configureAutoBuilder();
+    registerPoseEstimateListeners();
   }
 
   /**
@@ -227,6 +229,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       startSimThread();
     }
     configureAutoBuilder();
+    registerPoseEstimateListeners();
   }
 
   private void configureAutoBuilder() {
@@ -366,9 +369,16 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
           Pose2d botPoseEstimate = new Pose2d(botPose, botRotation);
 
           /*Get timestamped */
-          long timestamptMicroseconds = value.getTime();
+          long timestampMicroseconds = value.getTime();
 
-          /*Log Pose estimate to advantagescope */
+          /*Log pose estimate to AdvantageScope */
+          m_frontPoseEstimatePub.set(botPoseEstimate, timestampMicroseconds);
+
+          // Convert timestamp from microseconds to seconds and adjust for latency
+          double latency = poseArray[6];
+          double adjustedTimestamp = (timestampMicroseconds / 1000000.0) - (latency / 1000.0);
+
+          /*Log which apriltags are currently visible */
           int tagCount = (int) poseArray[7];
           int valsPerFiducial = 7;
           int expectedTotalVals = 11 + valsPerFiducial * tagCount;
@@ -380,13 +390,24 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
             return;
           }
 
-          boolean nonTagSeen = false;
           Translation3d[] visibleTagPositions = new Translation3d[tagCount];
           double[] distanceToTags = new double[tagCount];
           for (int i = 0; i < tagCount; i++) {
             int currentIndex = 11 + (i * valsPerFiducial);
             int id = (int) poseArray[currentIndex];
+            double distance = poseArray[currentIndex + 4];
+            visibleTagPositions[i] =
+                FieldConstants.APRILTAGS.getTagPose(id).orElseThrow().getTranslation();
+            distanceToTags[i] = distance;
           }
+          m_frontVisibleTagsPub.set(visibleTagPositions, timestampMicroseconds);
+          m_frontToTagDistancePub.set(distanceToTags, timestampMicroseconds);
+
+          /*Add the vision measurement to the pose estimator */
+          this.addVisionMeasurement(
+              botPoseEstimate,
+              Utils.fpgaToCurrentTime(adjustedTimestamp),
+              VisionConstants.FRONT_STD_DEVS);
         });
   }
 
