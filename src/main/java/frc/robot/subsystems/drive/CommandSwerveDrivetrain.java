@@ -14,8 +14,19 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.networktables.DoubleArrayPublisher;
+import edu.wpi.first.networktables.DoubleArraySubscriber;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEvent;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.NetworkTableValue;
+import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
@@ -23,7 +34,10 @@ import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Subsystem;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
+import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drive.TunerConstants.TunerSwerveDrivetrain;
+import java.util.EnumSet;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -110,6 +124,37 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   /* The SysId routine to test */
   private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
+
+  /*Networktables for logging */
+  private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
+
+  /**
+   * This NetworkTable is used to display driving information to AdvantageScope. Open <a
+   * href="https://docs.advantagescope.org/tab-reference/odometry">the AdvantageScope docs</a> to
+   * see what this looks like.
+   */
+  private final NetworkTable m_stateTable = m_inst.getTable("DriveState");
+
+  private final NetworkTable m_poseTable = m_stateTable.getSubTable("Poses");
+
+  /** Logs the front bot pose estimate to AdvantageScope. */
+  private final StructPublisher<Pose2d> m_frontPoseEstimatePub =
+      m_poseTable.getStructTopic("Front Pose Estimate", Pose2d.struct).publish();
+
+  private final NetworkTable m_speedsTable = m_stateTable.getSubTable("Speeds");
+  private final StructPublisher<ChassisSpeeds> m_appliedSpeedsPub =
+      m_speedsTable
+          .getStructTopic("PathPlanner Applied Robot-relative Speeds", ChassisSpeeds.struct)
+          .publish();
+
+  private final NetworkTable m_tagsTable = m_stateTable.getSubTable("Apriltags");
+
+  /** Logs the tags that are currently visible from the front to AdvantageScope. */
+  private final StructArrayPublisher<Translation3d> m_frontVisibleTagsPub =
+      m_tagsTable.getStructArrayTopic("Front Visible Tags", Translation3d.struct).publish();
+
+  private final DoubleArrayPublisher m_frontToTagDistancePub =
+      m_tagsTable.getDoubleArrayTopic("Tag Distance to Front Camera").publish();
 
   /**
    * Constructs a CTRE SwerveDrivetrain using the specified constants.
@@ -275,6 +320,74 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               updateSimState(deltaTime, RobotController.getBatteryVoltage());
             });
     m_simNotifier.startPeriodic(kSimLoopPeriod);
+  }
+
+  /**
+   * Registers the limelight pose listeners, so the poses can be used as soon as they are recieved
+   * from the limelights.
+   *
+   * @see frc.robot.util.LimelightHelpers#getBotPoseEstimate(String, String, boolean) the reference
+   *     code for processing the input from this NetworkTable entry
+   * @see <a
+   *     href="https://docs.wpilib.org/en/stable/docs/software/networktables/listening-for-change.html">the
+   *     explanation for listeners</a>
+   * @see <a
+   *     href="https://docs.limelightvision.io/docs/docs-limelight/apis/complete-networktables-api#apriltag-and-3d-data">the
+   *     limelight NetworkTables API</a> (look for botpose_orb_wpiblue)
+   */
+  private void registerPoseEstimateListeners() {
+    DoubleArraySubscriber frontPoseEstimateSub =
+        m_inst
+            .getTable(VisionConstants.FRONT_LIMELIGHT_NAME)
+            .getDoubleArrayTopic("botpose_orb_wpiblue")
+            .subscribe(null);
+
+    m_inst.addListener(
+        frontPoseEstimateSub,
+        EnumSet.of(NetworkTableEvent.Kind.kValueAll),
+        event -> {
+          NetworkTableValue value = event.valueData.value;
+          double[] poseArray = value.getDoubleArray();
+          // If there is no data available, don't use the data.
+          if (poseArray.length < 11) {
+            m_frontVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
+            m_frontToTagDistancePub.set(FieldConstants.NO_TAG_DISTANCES);
+            return;
+          }
+
+          /*Get bot pose estimate */
+          Translation2d botPose = new Translation2d(poseArray[0], poseArray[1]);
+          // Whenever the robot doesn't see any tags, it will send a pose of (0,0,0)
+          if (botPose.equals(Translation2d.kZero)) {
+            m_frontVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
+            return;
+          }
+          Rotation2d botRotation = Rotation2d.fromDegrees(poseArray[5]);
+          Pose2d botPoseEstimate = new Pose2d(botPose, botRotation);
+
+          /*Get timestamped */
+          long timestamptMicroseconds = value.getTime();
+
+          /*Log Pose estimate to advantagescope */
+          int tagCount = (int) poseArray[7];
+          int valsPerFiducial = 7;
+          int expectedTotalVals = 11 + valsPerFiducial * tagCount;
+
+          // If there is no more data available, stop logging
+          if (poseArray.length != expectedTotalVals || tagCount == 0) {
+            m_frontVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
+            m_frontToTagDistancePub.set(FieldConstants.NO_TAG_DISTANCES);
+            return;
+          }
+
+          boolean nonTagSeen = false;
+          Translation3d[] visibleTagPositions = new Translation3d[tagCount];
+          double[] distanceToTags = new double[tagCount];
+          for (int i = 0; i < tagCount; i++) {
+            int currentIndex = 11 + (i * valsPerFiducial);
+            int id = (int) poseArray[currentIndex];
+          }
+        });
   }
 
   /**

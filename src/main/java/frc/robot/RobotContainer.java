@@ -43,6 +43,7 @@ public class RobotContainer {
   public RobotContainer() {
     setDefaultCommands();
     configureDriverControllers();
+    m_drivetrain.registerTelemetry(m_logger::telemeterize);
   }
 
   private void setDefaultCommands() {
@@ -104,8 +105,6 @@ public class RobotContainer {
 
     // Reset the field-centric heading on left bumper press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
-
-    m_drivetrain.registerTelemetry(m_logger::telemeterize);
   }
 
   /** Use this method to map driver controls and commands */

@@ -48,6 +48,7 @@ public class Robot extends TimedRobot {
         0,
         0,
         0);
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 2);
 
     SignalLogger.setPath("/media/sda1/logs/");
     DataLogManager.start();
