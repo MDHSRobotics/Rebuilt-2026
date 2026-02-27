@@ -37,6 +37,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drive.TunerConstants.TunerSwerveDrivetrain;
+import frc.robot.subsystems.drive.requests.ResettableSwerveRequest;
 import java.util.EnumSet;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -262,6 +263,18 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
    */
   public Command applyRequest(Supplier<SwerveRequest> request) {
     return run(() -> this.setControl(request.get()));
+  }
+
+  /**
+   * Returns a command that resets the swerve request's controller/controllers and applies the
+   * specified control request to this swerve drivetrain.
+   *
+   * @param request Function returning the request to apply
+   * @return Command to run
+   */
+  public Command applyResettableRequest(Supplier<ResettableSwerveRequest> requestSupplier) {
+    return this.startRun(
+        () -> requestSupplier.get().resetRequest(), () -> this.setControl(requestSupplier.get()));
   }
 
   /**
