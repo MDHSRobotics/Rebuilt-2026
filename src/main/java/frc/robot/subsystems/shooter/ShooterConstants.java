@@ -20,4 +20,9 @@ public class ShooterConstants extends SubsystemBase {
 
   /* Kicker Motor P constant */
   public static final double K_P_KICKER = 0;
+
+  /*Units: degrees */
+  public static final double LIMELIGHT_MOUNT_ANGLE = 25;
+  /*Units: inches */
+  public static final double LIMELIGHT_LENS_HEIGHT = 20;
 }

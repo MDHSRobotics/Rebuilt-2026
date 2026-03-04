@@ -55,6 +55,7 @@ public class RobotContainer {
   public RobotContainer() {
     setDefaultCommands();
     configureDriverControllers();
+    configureOperatorControllers();
     m_drivetrain.registerTelemetry(m_logger::telemeterize);
   }
 
@@ -144,10 +145,6 @@ public class RobotContainer {
         .R2()
         .onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0 * DriveConstants.MAX_LINEAR_SPEED));
 
-    m_driverController.triangle().onTrue(Commands.runOnce(() -> m_shooter.runMotor(0.5)));
-
-    m_driverController.triangle().onFalse(Commands.runOnce(() -> m_shooter.stopMotor()));
-
     m_driverController.cross().whileTrue(m_aimingCommands.alignWithHub());
     m_driverController.circle().whileTrue(m_aimingCommands.alignWithTower());
   }
@@ -157,7 +154,11 @@ public class RobotContainer {
    * https://www.padcrafter.com/?templates=Driver+Controller&plat=1&rightTrigger=Quarter+Speed&leftStick=Drive&rightStick=Rotate&aButton=Align+with+Hub&bButton=Align+with+Tower
    * ">this controller map</a> to update and view the current controls.
    */
-  private void configureOperatorControllers() {}
+  private void configureOperatorControllers() {
+    m_operatorController.a().onTrue(Commands.runOnce(() -> m_shooter.runMotorTest(100)));
+
+    m_operatorController.a().onFalse(Commands.runOnce(() -> m_shooter.stopMotor()));
+  }
 
   public Command getAutonomousCommand() {
     // Simple drive forward auton

@@ -9,10 +9,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import java.util.function.DoubleSupplier;
 
 public class Intake extends SubsystemBase {
   private final SparkFlex m_intakeTopMotor =
@@ -44,25 +41,16 @@ public class Intake extends SubsystemBase {
         intakeSpinnerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
-  public Command disableMotorsCommand() {
-    return this.runOnce(
-            () -> {
-              m_intakeTopMotor.stopMotor();
-              m_intakeBottomMotor.stopMotor();
-              m_spinnerMotor.stopMotor();
-            })
-        .andThen(Commands.idle(this));
+  public void disableMotors() {
+    m_intakeTopMotor.stopMotor();
+    m_intakeBottomMotor.stopMotor();
+    m_spinnerMotor.stopMotor();
   }
 
-  public Command setPowerCommand(
-      DoubleSupplier topIntakeMotorPower,
-      DoubleSupplier bottomIntakeMotorPower,
-      DoubleSupplier spinnerMotorPower) {
-    return this.run(
-        () -> {
-          m_intakeTopMotor.set(topIntakeMotorPower.getAsDouble());
-          m_intakeBottomMotor.set(bottomIntakeMotorPower.getAsDouble());
-          m_spinnerMotor.set(bottomIntakeMotorPower.getAsDouble());
-        });
+  public void runMotor(
+      double topIntakeMotorPower, double bottomIntakeMotorPower, double spinnerMotorPower) {
+    m_intakeTopMotor.set(topIntakeMotorPower);
+    m_intakeBottomMotor.set(bottomIntakeMotorPower);
+    m_spinnerMotor.set(bottomIntakeMotorPower);
   }
 }

@@ -4,6 +4,7 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.FeedbackSensor;
+import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
@@ -11,8 +12,12 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import java.util.Optional;
 
 public class Shooter extends SubsystemBase {
   private final SparkFlex m_shooterLeftMotor =
@@ -35,6 +40,7 @@ public class Shooter extends SubsystemBase {
 
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
   private final NetworkTable m_table = m_inst.getTable("Shooter");
+  private final NetworkTable m_limelight = m_inst.getTable("limelight");
 
   private final DoublePublisher m_leftShooterSpeedPub =
       m_table.getDoubleTopic("Left Shooter Motor Speed ").publish();
@@ -42,6 +48,12 @@ public class Shooter extends SubsystemBase {
       m_table.getDoubleTopic("Right Shooter Motor Speed ").publish();
   private final DoublePublisher m_kickerSpeedPub =
       m_table.getDoubleTopic("Kicker Motor Speed ").publish();
+  private final DoublePublisher m_shooterTargetSpeedPub =
+      m_table.getDoubleTopic("Shooter Motor Target Speed ").publish();
+  private final DoublePublisher m_distanceRobotToTagPub =
+      m_table.getDoubleTopic("Distance From Robot to AprilTag ").publish();
+
+  private double distanceFromLimelightToAprilTag = 0;
 
   public Shooter() {
 
@@ -87,6 +99,20 @@ public class Shooter extends SubsystemBase {
     m_RightShooterSpeedPub.set(rightShooterVelocity);
     double kickerVelocity = m_kickerMotorEncoder.getVelocity();
     m_kickerSpeedPub.set(kickerVelocity);
+
+    NetworkTableEntry ty = m_limelight.getEntry("ty");
+    double targetOffsetAngle_Vertical = ty.getDouble(0.0);
+
+    // distance from the target to the floor
+    double goalHeightInches = 60.0;
+
+    double angleToGoalDegrees = ShooterConstants.LIMELIGHT_MOUNT_ANGLE + targetOffsetAngle_Vertical;
+    double angleToGoalRadians = angleToGoalDegrees * (Math.PI / 180.0);
+
+    // calculate distance
+    distanceFromLimelightToAprilTag =
+        (goalHeightInches - ShooterConstants.LIMELIGHT_LENS_HEIGHT) / Math.tan(angleToGoalRadians);
+    m_distanceRobotToTagPub.set(distanceFromLimelightToAprilTag);
   }
 
   public void runMotor(double power) {
@@ -94,8 +120,67 @@ public class Shooter extends SubsystemBase {
     m_kickerMotor.set(power / 2);
   }
 
+  public void runMotorTest(double setpoint) {
+    m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
+    m_shooterTargetSpeedPub.set(setpoint);
+  }
+
   public void stopMotor() {
     m_shooterLeftMotor.stopMotor();
     m_kickerMotor.stopMotor();
+  }
+
+  /** This method is used toi determine if the Hub is active */
+  public boolean isHubActive() {
+    Optional<Alliance> alliance = DriverStation.getAlliance();
+    if (alliance.isEmpty()) {
+      return false;
+    }
+    if (!DriverStation.isTeleopEnabled()) {
+      return false;
+    }
+
+    double matchTime = DriverStation.getMatchTime();
+    String gameData = DriverStation.getGameSpecificMessage();
+
+    // If there is no game data, assume hub is inactive
+    if (gameData.isEmpty()) {
+      return false;
+    }
+    boolean redInactiveFirst = false;
+    switch (gameData.charAt(0)) {
+      case 'R' -> redInactiveFirst = true;
+      case 'B' -> redInactiveFirst = false;
+      default -> {
+        // Assum hub is inactive if we have invalid game data
+        return false;
+      }
+    }
+
+    // Shift is active for blue if red won auto, or red if blue won auto
+    boolean shift1Active =
+        switch (alliance.get()) {
+          case Red -> !redInactiveFirst;
+          case Blue -> redInactiveFirst;
+        };
+
+    if (matchTime > 130) {
+      // Transition shift, hub is active
+      return true;
+    } else if (matchTime > 105) {
+      // Shift 1
+      return shift1Active;
+    } else if (matchTime > 80) {
+      // Shift 2
+      return !shift1Active;
+    } else if (matchTime > 55) {
+      // Shift 3
+      return shift1Active;
+    } else if (matchTime > 30) {
+      // Shift 4
+      return !shift1Active;
+    } else {
+      return false;
+    }
   }
 }
