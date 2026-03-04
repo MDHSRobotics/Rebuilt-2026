@@ -2,6 +2,7 @@ package frc.robot.util;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import java.util.function.Consumer;
 
@@ -19,5 +20,9 @@ public class AutonomousCreator {
 
   public void sendAutoChooser() {
     // Starting position
+    m_startingPositionChooser.addOption("Top", "Top to ");
+    m_startingPositionChooser.addOption("Middle", "Middle to ");
+    m_startingPositionChooser.addOption("Bottom", "Bottom to ");
+    SmartDashboard.putData("Starting Position", m_startingPositionChooser);
   }
 }

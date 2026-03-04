@@ -20,6 +20,7 @@ import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveTelemetry;
 import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.subsystems.drive.requests.DriveWithSetpointGeneration;
+import frc.robot.subsystems.shooter.Shooter;
 
 public class RobotContainer {
   // Robot Speed from 0% to 100%
@@ -35,6 +36,8 @@ public class RobotContainer {
       new SwerveRequest.SwerveDriveBrake()
           .withDriveRequestType(DriveRequestType.Velocity)
           .withSteerRequestType(SteerRequestType.MotionMagicExpo);
+
+  private final Shooter m_shooter = new Shooter();
 
   private final DriveTelemetry m_logger = new DriveTelemetry(m_robotSpeed);
 
@@ -140,6 +143,10 @@ public class RobotContainer {
     m_driverController
         .R2()
         .onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0 * DriveConstants.MAX_LINEAR_SPEED));
+
+    m_driverController.triangle().onTrue(Commands.runOnce(() -> m_shooter.runMotor(0.5)));
+
+    m_driverController.triangle().onFalse(Commands.runOnce(() -> m_shooter.stopMotor()));
 
     m_driverController.cross().whileTrue(m_aimingCommands.alignWithHub());
     m_driverController.circle().whileTrue(m_aimingCommands.alignWithTower());

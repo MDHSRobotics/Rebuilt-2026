@@ -8,10 +8,16 @@ public class ShooterConstants extends SubsystemBase {
   public static final int KICKER_MOTOR_ID = 21;
 
   /**
-   * The current limit for the arm and wheels in amps. This is currently set to the value suggested
-   * by <a
+   * The current limit for the shooter and kicker in amps. This is currently set to the value
+   * suggested by <a
    * href="https://docs.revrobotics.com/brushless/spark-flex/gs/make-it-spin#suggested-current-limits">REV
    * for the NEO Vortex.</a>
    */
   public static final int CURRENT_LIMIT = 80;
+
+  /* Shooter Motors P and D Constants */
+  public static final double K_P_ShOOTER = 0;
+
+  /* Kicker Motor P constant */
+  public static final double K_P_KICKER = 0;
 }
