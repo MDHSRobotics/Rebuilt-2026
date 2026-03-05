@@ -17,6 +17,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.VisionConstants;
 import java.util.Optional;
 
 public class Shooter extends SubsystemBase {
@@ -106,12 +107,13 @@ public class Shooter extends SubsystemBase {
     // distance from the target to the floor
     double goalHeightInches = 60.0;
 
-    double angleToGoalDegrees = ShooterConstants.LIMELIGHT_MOUNT_ANGLE + targetOffsetAngle_Vertical;
+    double angleToGoalDegrees = VisionConstants.LIMELIGHT_MOUNT_ANGLE + targetOffsetAngle_Vertical;
     double angleToGoalRadians = angleToGoalDegrees * (Math.PI / 180.0);
 
     // calculate distance
     distanceFromLimelightToAprilTag =
-        (goalHeightInches - ShooterConstants.LIMELIGHT_LENS_HEIGHT) / Math.tan(angleToGoalRadians);
+        (goalHeightInches - VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE)
+            / Math.tan(angleToGoalRadians);
     m_distanceRobotToTagPub.set(distanceFromLimelightToAprilTag);
   }
 
@@ -128,6 +130,33 @@ public class Shooter extends SubsystemBase {
   public void stopMotor() {
     m_shooterLeftMotor.stopMotor();
     m_kickerMotor.stopMotor();
+  }
+
+  public void rampUpShooter() {
+    double tagID =
+        NetworkTableInstance.getDefault().getTable("limelight").getEntry("tid").getDouble(0);
+    Optional<Alliance> alliance = DriverStation.getAlliance();
+    if (alliance.isEmpty()) {
+      return;
+    } else if (alliance.get() == Alliance.Blue) {
+      if (isHubActive() && (tagID == 26 || tagID == 25)) {
+        m_leftShooterMotorController.setSetpoint(100, ControlType.kVelocity);
+        m_kickerMotorController.setSetpoint(100, ControlType.kVelocity);
+      } else {
+        m_shooterLeftMotor.stopMotor();
+        m_shooterRightMotor.stopMotor();
+        m_kickerMotor.stopMotor();
+      }
+    } else if (alliance.get() == Alliance.Red) {
+      if (isHubActive() && (tagID == 9 || tagID == 10)) {
+        m_leftShooterMotorController.setSetpoint(100, ControlType.kVelocity);
+        m_kickerMotorController.setSetpoint(100, ControlType.kVelocity);
+      } else {
+        m_shooterLeftMotor.stopMotor();
+        m_shooterRightMotor.stopMotor();
+        m_kickerMotor.stopMotor();
+      }
+    }
   }
 
   /** This method is used toi determine if the Hub is active */

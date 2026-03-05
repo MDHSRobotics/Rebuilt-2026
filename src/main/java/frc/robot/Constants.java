@@ -35,6 +35,9 @@ public final class Constants {
     /** Distance from the floor to the front limelight lens in meters */
     public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(0).in(Meters);
 
+    /*Units: degrees */
+    public static final double LIMELIGHT_MOUNT_ANGLE = 25;
+
     /** Units: Degrees */
     public static final double FRONT_LIMELIGHT_PITCH = 0;
 
