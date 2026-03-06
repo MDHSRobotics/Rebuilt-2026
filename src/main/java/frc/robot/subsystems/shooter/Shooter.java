@@ -129,6 +129,7 @@ public class Shooter extends SubsystemBase {
 
   public void stopMotor() {
     m_shooterLeftMotor.stopMotor();
+    m_shooterRightMotor.stopMotor();
     m_kickerMotor.stopMotor();
   }
 

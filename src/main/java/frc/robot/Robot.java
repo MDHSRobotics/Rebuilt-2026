@@ -48,7 +48,10 @@ public class Robot extends TimedRobot {
         0,
         0,
         0);
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 2);
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 1);
+    LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 1);
+    LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 200);
+    LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
 
     SignalLogger.setPath("/media/sda1/logs/");
     DataLogManager.start();
@@ -81,6 +84,11 @@ public class Robot extends TimedRobot {
       System.out.println("Starting Auto: " + m_autonomousCommand.getName());
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
+
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
+    LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
+    LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
+    LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
   }
 
   @Override
@@ -94,6 +102,11 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       CommandScheduler.getInstance().cancel(m_autonomousCommand);
     }
+
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
+    LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
+    LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
+    LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
   }
 
   @Override
@@ -105,6 +118,10 @@ public class Robot extends TimedRobot {
   @Override
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
+    LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
+    LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
+    LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
   }
 
   @Override
@@ -113,6 +130,10 @@ public class Robot extends TimedRobot {
   @Override
   public void testExit() {
     SignalLogger.stop();
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 1);
+    LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 1);
+    LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 200);
+    LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
   }
 
   @Override

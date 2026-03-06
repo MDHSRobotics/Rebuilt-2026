@@ -46,6 +46,22 @@ public final class Constants {
     public static final double FRONT_Y_STD_DEV = 0;
     public static Vector<N3> FRONT_STD_DEVS =
         VecBuilder.fill(FRONT_X_STD_DEV, FRONT_Y_STD_DEV, Double.MAX_VALUE);
+
+    public static final String BACK_LIMELIGHT_NAME = "limelight-back";
+
+    /** Distance from the center of the robot to the back limelight lens in meters */
+    public static final double BACK_LIMELIGHT_FORWARD_DISTANCE = Inches.of(0).in(Meters);
+
+    /** Distance from the floor to the front limelight lens in meters */
+    public static final double BACK_LIMELIGHT_UP_DISTANCE = Inches.of(0).in(Meters);
+
+    /** Units: degree */
+    public static final double BACK_LIMELIGHT_YAW = 180;
+
+    public static final double BACK_X_STD_DEV = 0;
+    public static final double BACK_Y_STD_DEV = 0;
+    public static Vector<N3> BACK_STD_DEVS =
+        VecBuilder.fill(BACK_X_STD_DEV, BACK_Y_STD_DEV, Double.MAX_VALUE);
   }
 
   public static class FieldConstants {

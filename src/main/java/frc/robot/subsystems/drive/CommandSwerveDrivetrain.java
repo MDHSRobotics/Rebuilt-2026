@@ -142,6 +142,9 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
   private final StructPublisher<Pose2d> m_frontPoseEstimatePub =
       m_poseTable.getStructTopic("Front Pose Estimate", Pose2d.struct).publish();
 
+  private final StructPublisher<Pose2d> m_backPoseEstimatePub =
+      m_poseTable.getStructTopic("Back Pose Estimate", Pose2d.struct).publish();
+
   private final NetworkTable m_speedsTable = m_stateTable.getSubTable("Speeds");
   private final StructPublisher<ChassisSpeeds> m_appliedSpeedsPub =
       m_speedsTable
@@ -155,6 +158,11 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       m_tagsTable.getStructArrayTopic("Front Visible Tags", Translation3d.struct).publish();
 
   private final DoubleArrayPublisher m_frontToTagDistancePub =
+      m_tagsTable.getDoubleArrayTopic("Tag Distance to Front Camera").publish();
+
+  private final StructArrayPublisher<Translation3d> m_backVisibleTagsPub =
+      m_tagsTable.getStructArrayTopic("Back Visible Tags", Translation3d.struct).publish();
+  private final DoubleArrayPublisher m_backToTagDistancePub =
       m_tagsTable.getDoubleArrayTopic("Tag Distance to Front Camera").publish();
 
   /**
@@ -421,6 +429,78 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               botPoseEstimate,
               Utils.fpgaToCurrentTime(adjustedTimestamp),
               VisionConstants.FRONT_STD_DEVS);
+        });
+
+    DoubleArraySubscriber backPoseEstimateSub =
+        m_inst
+            .getTable(VisionConstants.BACK_LIMELIGHT_NAME)
+            .getDoubleArrayTopic("botpose_orb_wpiblue")
+            .subscribe(null);
+
+    m_inst.addListener(
+        backPoseEstimateSub,
+        EnumSet.of(NetworkTableEvent.Kind.kValueAll),
+        event -> {
+          NetworkTableValue value = event.valueData.value;
+          double[] poseArray = value.getDoubleArray();
+          // If there is no data available, don't use the data
+          if (poseArray.length < 11) {
+            m_backVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
+            m_backToTagDistancePub.set(FieldConstants.NO_TAG_DISTANCES);
+            return;
+          }
+
+          /* Get bot pose estimate */
+          Translation2d botPose = new Translation2d(poseArray[0], poseArray[1]);
+          // Whenever the robot doesn't see any tags, it will send a pose of (0,0,0), so don't use
+          // the data
+          if (botPose.equals(Translation2d.kZero)) {
+            m_backVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
+            m_backToTagDistancePub.set(FieldConstants.NO_TAG_DISTANCES);
+            return;
+          }
+          Rotation2d botRotation = Rotation2d.fromDegrees(poseArray[5]);
+          Pose2d botPoseEstimate = new Pose2d(botPose, botRotation);
+
+          /* Get timestamp */
+          long timestampMicroseconds = value.getTime();
+
+          /* Log pose estimate to AdvantageScope */
+          m_backPoseEstimatePub.set(botPoseEstimate, timestampMicroseconds);
+
+          // Convert timestamp from microseconds to seconds and adjust for latency
+          double latency = poseArray[6];
+          double adjustedTimestamp = (timestampMicroseconds / 1000000.0) - (latency / 1000.0);
+
+          /* Log which apriltags are currently visible */
+          int tagCount = (int) poseArray[7];
+          int valsPerFiducial = 7;
+          int expectedTotalVals = 11 + valsPerFiducial * tagCount;
+
+          // If there is no more data available, stop logging
+          if (poseArray.length != expectedTotalVals || tagCount == 0) {
+            m_backVisibleTagsPub.set(FieldConstants.NO_VISIBLE_TAGS);
+            m_backToTagDistancePub.set(FieldConstants.NO_TAG_DISTANCES);
+            return;
+          }
+          Translation3d[] visibleTagPositions = new Translation3d[tagCount];
+          double[] distanceToTags = new double[tagCount];
+          for (int i = 0; i < tagCount; i++) {
+            int currentIndex = 11 + (i * valsPerFiducial);
+            int id = (int) poseArray[currentIndex];
+            double distance = poseArray[currentIndex + 4];
+            visibleTagPositions[i] =
+                FieldConstants.APRILTAGS.getTagPose(id).orElseThrow().getTranslation();
+            distanceToTags[i] = distance;
+          }
+          m_backVisibleTagsPub.set(visibleTagPositions, timestampMicroseconds);
+          m_backToTagDistancePub.set(distanceToTags, timestampMicroseconds);
+
+          /*Add the vision measurement to the pose estimator */
+          this.addVisionMeasurement(
+              botPoseEstimate,
+              Utils.fpgaToCurrentTime(adjustedTimestamp),
+              VisionConstants.BACK_STD_DEVS);
         });
   }
 
