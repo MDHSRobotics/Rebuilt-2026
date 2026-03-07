@@ -17,6 +17,7 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
 import java.util.Optional;
 
@@ -34,7 +35,7 @@ public class Shooter extends SubsystemBase {
 
   private final SparkClosedLoopController m_leftShooterMotorController =
       m_shooterLeftMotor.getClosedLoopController();
-  private final SparkClosedLoopController m_rightMotorController =
+  private final SparkClosedLoopController m_rightShooterMotorController =
       m_shooterRightMotor.getClosedLoopController();
   private final SparkClosedLoopController m_kickerMotorController =
       m_kickerMotor.getClosedLoopController();
@@ -65,7 +66,7 @@ public class Shooter extends SubsystemBase {
         .idleMode(IdleMode.kBrake)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .p(ShooterConstants.K_P_ShOOTER);
+        .p(ShooterConstants.K_P_SHOOTER);
     m_shooterLeftMotor.configure(
         shooterLeftMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -76,7 +77,7 @@ public class Shooter extends SubsystemBase {
         .idleMode(IdleMode.kBrake)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .p(ShooterConstants.K_P_ShOOTER);
+        .p(ShooterConstants.K_P_SHOOTER);
     m_shooterRightMotor.configure(
         shooterRightMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -104,15 +105,13 @@ public class Shooter extends SubsystemBase {
     NetworkTableEntry ty = m_limelight.getEntry("ty");
     double targetOffsetAngle_Vertical = ty.getDouble(0.0);
 
-    // distance from the target to the floor
-    double goalHeightInches = 60.0;
-
     double angleToGoalDegrees = VisionConstants.LIMELIGHT_MOUNT_ANGLE + targetOffsetAngle_Vertical;
     double angleToGoalRadians = angleToGoalDegrees * (Math.PI / 180.0);
 
     // calculate distance
     distanceFromLimelightToAprilTag =
-        (goalHeightInches - VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE)
+        (FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG
+                - VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE)
             / Math.tan(angleToGoalRadians);
     m_distanceRobotToTagPub.set(distanceFromLimelightToAprilTag);
   }
@@ -122,8 +121,13 @@ public class Shooter extends SubsystemBase {
     m_kickerMotor.set(power / 2);
   }
 
-  public void runMotorTest(double setpoint) {
+  public void runLeftMotorTest(double setpoint) {
     m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
+    m_shooterTargetSpeedPub.set(setpoint);
+  }
+
+  public void runRightMotorTest(double setpoint) {
+    m_rightShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
     m_shooterTargetSpeedPub.set(setpoint);
   }
 

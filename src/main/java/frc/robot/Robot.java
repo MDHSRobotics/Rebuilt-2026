@@ -46,8 +46,16 @@ public class Robot extends TimedRobot {
         0,
         VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
         0,
-        0,
+        VisionConstants.FRONT_LIMELIGHT_PITCH,
         0);
+    LimelightHelpers.setCameraPose_RobotSpace(
+        VisionConstants.BACK_LIMELIGHT_NAME,
+        VisionConstants.BACK_LIMELIGHT_FORWARD_DISTANCE,
+        0,
+        VisionConstants.BACK_LIMELIGHT_UP_DISTANCE,
+        0,
+        0,
+        VisionConstants.BACK_LIMELIGHT_YAW);
     LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 1);
     LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 1);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 200);

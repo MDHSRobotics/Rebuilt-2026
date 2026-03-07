@@ -36,10 +36,10 @@ public final class Constants {
     public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(0).in(Meters);
 
     /*Units: degrees */
-    public static final double LIMELIGHT_MOUNT_ANGLE = 25;
+    public static final double LIMELIGHT_MOUNT_ANGLE = 45;
 
     /** Units: Degrees */
-    public static final double FRONT_LIMELIGHT_PITCH = 0;
+    public static final double FRONT_LIMELIGHT_PITCH = 45;
 
     // These needs to be tested and adjusted later on
     public static final double FRONT_X_STD_DEV = 0;
@@ -116,5 +116,11 @@ public final class Constants {
       APRILTAGS.getTagPose(31).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
       APRILTAGS.getTagPose(32).orElseThrow().getRotation().toRotation2d().plus(Rotation2d.k180deg),
     };
+
+    /**
+     * The distance from the floor to the center of the Hub's apriltag I got these values from
+     * searching up the april tag 2D drawing from FRC Rebuilt Units: Inches
+     */
+    public static final double DISTANCE_FROM_FLOOR_TO_HUB_TAG = 44.25;
   }
 }

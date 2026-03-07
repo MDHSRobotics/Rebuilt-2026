@@ -155,9 +155,10 @@ public class RobotContainer {
    * ">this controller map</a> to update and view the current controls.
    */
   private void configureOperatorControllers() {
-    m_operatorController.a().onTrue(Commands.runOnce(() -> m_shooter.runMotorTest(100)));
+    m_operatorController.a().onTrue(Commands.runOnce(() -> m_shooter.runLeftMotorTest(50)));
 
     m_operatorController.a().onFalse(Commands.runOnce(() -> m_shooter.stopMotor()));
+    m_operatorController.b().onTrue(Commands.runOnce(() -> m_shooter.runRightMotorTest(50)));
   }
 
   public Command getAutonomousCommand() {
