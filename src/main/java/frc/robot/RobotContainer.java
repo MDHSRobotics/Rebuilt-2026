@@ -19,7 +19,6 @@ import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveTelemetry;
 import frc.robot.subsystems.drive.TunerConstants;
-import frc.robot.subsystems.drive.requests.DriveWithSetpointGeneration;
 import frc.robot.subsystems.shooter.Shooter;
 
 public class RobotContainer {
@@ -27,11 +26,17 @@ public class RobotContainer {
   private double m_robotSpeed = 1.0 * DriveConstants.MAX_LINEAR_SPEED;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
-  private final DriveWithSetpointGeneration m_drive =
-      new DriveWithSetpointGeneration(
-              DriveConstants.SWERVE_SETPOINT_GENERATOR, Constants.UPDATE_PERIOD)
-          .withDriveRequestType(DriveRequestType.Velocity)
-          .withSteerRequestType(SteerRequestType.MotionMagicExpo);
+  // private final DriveWithSetpointGeneration m_drive =
+  //     new DriveWithSetpointGeneration(
+  //             DriveConstants.SWERVE_SETPOINT_GENERATOR, Constants.UPDATE_PERIOD)
+  //         .withDriveRequestType(DriveRequestType.Velocity)
+  //         .withSteerRequestType(SteerRequestType.MotionMagicExpo);
+  private final SwerveRequest.FieldCentric m_drive =
+      new SwerveRequest.FieldCentric()
+          .withDeadband(getDeadband())
+          .withRotationalDeadband(getRotationalDeadband()) // Add a 10% deadband
+          .withDriveRequestType(
+              DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
   private final SwerveRequest.SwerveDriveBrake brake =
       new SwerveRequest.SwerveDriveBrake()
           .withDriveRequestType(DriveRequestType.Velocity)
@@ -64,7 +69,7 @@ public class RobotContainer {
     // and Y is defined as to the left according to WPILib convention.
     m_drivetrain.setDefaultCommand(
         // Drivetrain will execute this command periodically
-        m_drivetrain.applyResettableRequest(
+        m_drivetrain.applyRequest(
             () ->
                 m_drive
                     .withVelocityX(getVelocityX())
@@ -155,10 +160,18 @@ public class RobotContainer {
    * ">this controller map</a> to update and view the current controls.
    */
   private void configureOperatorControllers() {
-    m_operatorController.a().onTrue(Commands.runOnce(() -> m_shooter.runLeftMotorTest(50)));
+    m_operatorController
+        .x()
+        .onTrue(Commands.runOnce(() -> m_shooter.runLeftMotorTest(10), m_shooter));
 
-    m_operatorController.a().onFalse(Commands.runOnce(() -> m_shooter.stopMotor()));
-    m_operatorController.b().onTrue(Commands.runOnce(() -> m_shooter.runRightMotorTest(50)));
+    // m_operatorController.y().onTrue(Commands.run(() -> m_shooter.runRightMotorTest(10),
+    // m_shooter));
+    // m_operatorController.a().onTrue(Commands.run(() -> m_shooter.runMotorsTest(10), m_shooter));
+
+    m_operatorController.b().onTrue(Commands.runOnce(() -> m_shooter.stopMotor(), m_shooter));
+    m_operatorController
+        .y()
+        .toggleOnTrue(Commands.run(() -> m_shooter.runLeftMotor(-0.9, -0.5), m_shooter));
   }
 
   public Command getAutonomousCommand() {

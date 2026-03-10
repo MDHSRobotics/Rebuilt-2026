@@ -25,4 +25,6 @@ public class AutonomousCreator {
     m_startingPositionChooser.addOption("Bottom", "Bottom to ");
     SmartDashboard.putData("Starting Position", m_startingPositionChooser);
   }
+
+  private void createOneShootingSequenceAuto() {}
 }

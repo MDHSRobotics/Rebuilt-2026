@@ -63,7 +63,7 @@ public class Shooter extends SubsystemBase {
     SparkFlexConfig shooterLeftMotorConfig = new SparkFlexConfig();
     shooterLeftMotorConfig
         .smartCurrentLimit(ShooterConstants.CURRENT_LIMIT)
-        .idleMode(IdleMode.kBrake)
+        .idleMode(IdleMode.kCoast)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .p(ShooterConstants.K_P_SHOOTER);
@@ -74,7 +74,7 @@ public class Shooter extends SubsystemBase {
     SparkFlexConfig shooterRightMotorConfig = new SparkFlexConfig();
     shooterRightMotorConfig
         .smartCurrentLimit(ShooterConstants.CURRENT_LIMIT)
-        .idleMode(IdleMode.kBrake)
+        .idleMode(IdleMode.kCoast)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .p(ShooterConstants.K_P_SHOOTER);
@@ -116,9 +116,9 @@ public class Shooter extends SubsystemBase {
     m_distanceRobotToTagPub.set(distanceFromLimelightToAprilTag);
   }
 
-  public void runMotor(double power) {
+  public void runLeftMotor(double power, double kickerPower) {
     m_shooterLeftMotor.set(power);
-    m_kickerMotor.set(power / 2);
+    m_kickerMotor.set(kickerPower);
   }
 
   public void runLeftMotorTest(double setpoint) {
@@ -128,6 +128,12 @@ public class Shooter extends SubsystemBase {
 
   public void runRightMotorTest(double setpoint) {
     m_rightShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
+    m_shooterTargetSpeedPub.set(setpoint);
+  }
+
+  public void runMotorsTest(double setpoint) {
+    m_rightShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
+    m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
     m_shooterTargetSpeedPub.set(setpoint);
   }
 
