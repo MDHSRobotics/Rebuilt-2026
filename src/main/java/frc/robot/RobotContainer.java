@@ -10,6 +10,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -19,6 +20,8 @@ import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveTelemetry;
 import frc.robot.subsystems.drive.TunerConstants;
+import frc.robot.subsystems.hopper.Hopper;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 
 public class RobotContainer {
@@ -43,6 +46,8 @@ public class RobotContainer {
           .withSteerRequestType(SteerRequestType.MotionMagicExpo);
 
   private final Shooter m_shooter = new Shooter();
+  private final Intake m_intake = new Intake();
+  private final Hopper m_hopper = new Hopper();
 
   private final DriveTelemetry m_logger = new DriveTelemetry(m_robotSpeed);
 
@@ -95,25 +100,14 @@ public class RobotContainer {
 
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
-    // m_driverController
-    //     .share()
-    //     .and(m_driverController.triangle())
-    //     .whileTrue(m_drivetrain.sysIdDynamic(Direction.kForward));
-    // m_driverController
-    //     .share()
-    //     .and(m_driverController.square())
-    //     .whileTrue(m_drivetrain.sysIdDynamic(Direction.kReverse));
-    // m_driverController
-    //     .options()
-    //     .and(m_driverController.triangle())
-    //     .whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kForward));
-    // m_driverController
-    //     .options()
-    //     .and(m_driverController.square())
-    //     .whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kReverse));
+    // m_driverController.povUp().whileTrue(m_drivetrain.sysIdDynamic(Direction.kForward));
+    // m_driverController.povDown().whileTrue(m_drivetrain.sysIdDynamic(Direction.kReverse));
+    // m_driverController.povRight().whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kForward));
+    // m_driverController.povLeft().whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
     // Reset the field-centric heading on left bumper press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
+    m_intake.setDefaultCommand(new RunCommand(() -> m_intake.disableMotors(), m_intake));
   }
 
   /**
@@ -144,11 +138,11 @@ public class RobotContainer {
     // Quarter Speed
     m_driverController
         .R2()
-        .onTrue(Commands.runOnce(() -> m_robotSpeed = 0.25 * DriveConstants.MAX_LINEAR_SPEED));
+        .whileTrue(Commands.runOnce(() -> m_robotSpeed = 0.25 * DriveConstants.MAX_LINEAR_SPEED));
 
     m_driverController
         .R2()
-        .onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0 * DriveConstants.MAX_LINEAR_SPEED));
+        .whileFalse(Commands.runOnce(() -> m_robotSpeed = 1.0 * DriveConstants.MAX_LINEAR_SPEED));
 
     m_driverController.cross().whileTrue(m_aimingCommands.alignWithHub());
     m_driverController.circle().whileTrue(m_aimingCommands.alignWithTower());
@@ -162,7 +156,7 @@ public class RobotContainer {
   private void configureOperatorControllers() {
     m_operatorController
         .x()
-        .onTrue(Commands.runOnce(() -> m_shooter.runLeftMotorTest(10), m_shooter));
+        .onTrue(Commands.runOnce(() -> m_shooter.runLeftMotorTest(100), m_shooter));
 
     // m_operatorController.y().onTrue(Commands.run(() -> m_shooter.runRightMotorTest(10),
     // m_shooter));
@@ -172,6 +166,9 @@ public class RobotContainer {
     m_operatorController
         .y()
         .toggleOnTrue(Commands.run(() -> m_shooter.runLeftMotor(-0.9, -0.5), m_shooter));
+    m_operatorController
+        .leftTrigger()
+        .whileTrue(Commands.run(() -> m_intake.runSpinner(0.2), m_intake));
   }
 
   public Command getAutonomousCommand() {

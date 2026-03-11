@@ -30,10 +30,10 @@ public final class Constants {
     public static final String FRONT_LIMELIGHT_NAME = "limelight";
 
     /** Distance from the center of the robot to the front limelight lens in meters */
-    public static final double FRONT_LIMELIGHT_FORWARD_DISTANCE = Inches.of(0).in(Meters);
+    public static final double FRONT_LIMELIGHT_FORWARD_DISTANCE = Inches.of(22.416).in(Meters);
 
     /** Distance from the floor to the front limelight lens in meters */
-    public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(0).in(Meters);
+    public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(22.014).in(Meters);
 
     /*Units: degrees */
     public static final double LIMELIGHT_MOUNT_ANGLE = 45;

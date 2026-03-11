@@ -3,8 +3,8 @@ package frc.robot.subsystems.shooter;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterConstants extends SubsystemBase {
-  public static final int SHOOTER_LEFT_MOTOR_ID = 19;
-  public static final int SHOOTER_RIGHT_MOTOR_ID = 20;
+  public static final int SHOOTER_LEFT_MOTOR_ID = 20;
+  public static final int SHOOTER_RIGHT_MOTOR_ID = 19;
   public static final int KICKER_MOTOR_ID = 21;
 
   /**

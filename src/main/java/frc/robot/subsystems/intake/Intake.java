@@ -25,24 +25,31 @@ public class Intake extends SubsystemBase {
       new SparkFlex(IntakeConstants.INTAKE_SPINNERS_MOTOR_ID, MotorType.kBrushless);
 
   // PID Controllers
-  private final SparkClosedLoopController m_intakeController =
+  private final SparkClosedLoopController m_intakeLeftController =
       m_intakeLeftMotor.getClosedLoopController();
+  private final SparkClosedLoopController m_intakeRightController =
+      m_intakeRightMotor.getClosedLoopController();
   private final SparkClosedLoopController m_spinnerController =
       m_spinnerMotor.getClosedLoopController();
 
   // Encoders
   private final AbsoluteEncoder m_intakeLeftEncoder = m_intakeLeftMotor.getAbsoluteEncoder();
+  private final AbsoluteEncoder m_intakeRightEncoder = m_intakeRightMotor.getAbsoluteEncoder();
   private final AbsoluteEncoder m_spinnerEncoder = m_spinnerMotor.getAbsoluteEncoder();
 
   // Networktables data
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
   private final NetworkTable m_table = m_inst.getTable("Intake");
-  private final DoublePublisher m_intakePositionPub =
+  private final DoublePublisher m_intakeLeftPositionPub =
+      m_inst.getDoubleTopic("Intake Current Position ").publish();
+  private final DoublePublisher m_intakeRightPositionPub =
       m_inst.getDoubleTopic("Intake Current Position ").publish();
   private final DoublePublisher m_spinnerSpeedPub =
       m_inst.getDoubleTopic("Spinner Motors Speed ").publish();
-  private final DoublePublisher m_targetPositionPub =
-      m_table.getDoubleTopic("Target Position (Rotations)").publish();
+  private final DoublePublisher m_leftTargetPositionPub =
+      m_table.getDoubleTopic("Left Target Position (Rotations)").publish();
+  private final DoublePublisher m_rightTargetPositionPub =
+      m_table.getDoubleTopic("Right Target Position (Rotations)").publish();
   private final DoublePublisher m_targetSpeedPub =
       m_table.getDoubleTopic("Target Speed (RPM)").publish();
 
@@ -87,7 +94,7 @@ public class Intake extends SubsystemBase {
   public void periodic() {
     double position = m_intakeLeftEncoder.getPosition();
     double velocity = m_spinnerEncoder.getVelocity();
-    m_intakePositionPub.set(position);
+    m_intakeLeftPositionPub.set(position);
     m_spinnerSpeedPub.set(velocity);
   }
 
@@ -104,21 +111,33 @@ public class Intake extends SubsystemBase {
     m_spinnerMotor.set(rightIntakeMotorPower);
   }
 
+  public void runSpinner(double power) {
+    m_spinnerMotor.set(power);
+  }
+
   public void intakeBall() {
-    m_intakeController.setSetpoint(IntakeConstants.PICKUP_POSITION, ControlType.kPosition);
+    m_intakeLeftController.setSetpoint(IntakeConstants.PICKUP_POSITION_LEFT, ControlType.kPosition);
+    m_intakeRightController.setSetpoint(
+        IntakeConstants.PICKUP_POSITION_RIGHT, ControlType.kPosition);
     m_spinnerController.setSetpoint(IntakeConstants.INTAKE_SPINNERS_SPEED, ControlType.kVelocity);
-    m_intakePositionPub.set(m_intakeLeftEncoder.getPosition());
+    m_intakeLeftPositionPub.set(m_intakeLeftEncoder.getPosition());
+    m_intakeRightPositionPub.set(m_intakeRightEncoder.getPosition());
     m_spinnerSpeedPub.set(m_spinnerEncoder.getVelocity());
-    m_targetPositionPub.set(IntakeConstants.PICKUP_POSITION);
+    m_leftTargetPositionPub.set(IntakeConstants.PICKUP_POSITION_LEFT);
+    m_rightTargetPositionPub.set(IntakeConstants.PICKUP_POSITION_RIGHT);
     m_targetSpeedPub.set(IntakeConstants.INTAKE_SPINNERS_SPEED);
   }
 
   public void stowedIntake() {
-    m_intakeController.setSetpoint(IntakeConstants.STOWED_POSITION, ControlType.kPosition);
+    m_intakeLeftController.setSetpoint(IntakeConstants.STOWED_POSITION_LEFT, ControlType.kPosition);
+    m_intakeRightController.setSetpoint(
+        IntakeConstants.STOWED_POSITION_RIGHT, ControlType.kPosition);
     m_spinnerMotor.stopMotor();
-    m_intakePositionPub.set(m_intakeLeftEncoder.getPosition());
+    m_intakeLeftPositionPub.set(m_intakeLeftEncoder.getPosition());
+    m_intakeRightPositionPub.set(m_intakeRightEncoder.getPosition());
     m_spinnerSpeedPub.set(m_spinnerEncoder.getVelocity());
-    m_targetPositionPub.set(IntakeConstants.STOWED_POSITION);
+    m_leftTargetPositionPub.set(IntakeConstants.STOWED_POSITION_LEFT);
+    m_rightTargetPositionPub.set(IntakeConstants.STOWED_POSITION_RIGHT);
     m_targetSpeedPub.set(0);
   }
 }

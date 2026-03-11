@@ -48,20 +48,21 @@ public class Robot extends TimedRobot {
         0,
         VisionConstants.FRONT_LIMELIGHT_PITCH,
         0);
-    LimelightHelpers.setCameraPose_RobotSpace(
-        VisionConstants.BACK_LIMELIGHT_NAME,
-        VisionConstants.BACK_LIMELIGHT_FORWARD_DISTANCE,
-        0,
-        VisionConstants.BACK_LIMELIGHT_UP_DISTANCE,
-        0,
-        0,
-        VisionConstants.BACK_LIMELIGHT_YAW);
+    // LimelightHelpers.setCameraPose_RobotSpace(
+    //     VisionConstants.BACK_LIMELIGHT_NAME,
+    //     VisionConstants.BACK_LIMELIGHT_FORWARD_DISTANCE,
+    //     0,
+    //     VisionConstants.BACK_LIMELIGHT_UP_DISTANCE,
+    //     0,
+    //     0,
+    //     VisionConstants.BACK_LIMELIGHT_YAW);
     LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 1);
-    LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 1);
+    // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 1);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 200);
-    LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
+    // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
 
     SignalLogger.setPath("/media/sda1/logs/");
+    SignalLogger.start();
     DataLogManager.start();
     DriverStation.startDataLog(DataLogManager.getLog(), true);
     URCL.start();
@@ -94,9 +95,9 @@ public class Robot extends TimedRobot {
     }
 
     LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
-    LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
+    // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
-    LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
+    // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
   }
 
   @Override
@@ -112,9 +113,9 @@ public class Robot extends TimedRobot {
     }
 
     LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
-    LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
+    // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
-    LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
+    // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
   }
 
   @Override
@@ -127,9 +128,9 @@ public class Robot extends TimedRobot {
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
     LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
-    LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
+    // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
-    LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
+    // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
   }
 
   @Override
@@ -139,9 +140,9 @@ public class Robot extends TimedRobot {
   public void testExit() {
     SignalLogger.stop();
     LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 1);
-    LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 1);
+    // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 1);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 200);
-    LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
+    // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 200);
   }
 
   @Override
