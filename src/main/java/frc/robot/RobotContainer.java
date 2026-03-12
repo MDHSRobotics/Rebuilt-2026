@@ -10,6 +10,7 @@ import com.ctre.phoenix6.swerve.SwerveRequest;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -26,7 +27,7 @@ import frc.robot.subsystems.shooter.Shooter;
 
 public class RobotContainer {
   // Robot Speed from 0% to 100%
-  private double m_robotSpeed = 1.0 * DriveConstants.MAX_LINEAR_SPEED;
+  private double m_robotSpeed = 1.0;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   // private final DriveWithSetpointGeneration m_drive =
@@ -107,7 +108,9 @@ public class RobotContainer {
 
     // Reset the field-centric heading on left bumper press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
+    m_shooter.setDefaultCommand(new RunCommand(() -> m_shooter.stopMotor(), m_shooter));
     m_intake.setDefaultCommand(new RunCommand(() -> m_intake.disableMotors(), m_intake));
+    m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stopMotor(), m_hopper));
   }
 
   /**
@@ -136,13 +139,9 @@ public class RobotContainer {
     //     .whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
     // Quarter Speed
-    m_driverController
-        .R2()
-        .whileTrue(Commands.runOnce(() -> m_robotSpeed = 0.25 * DriveConstants.MAX_LINEAR_SPEED));
+    m_driverController.R2().onTrue(Commands.runOnce(() -> m_robotSpeed = 0.25));
 
-    m_driverController
-        .R2()
-        .whileFalse(Commands.runOnce(() -> m_robotSpeed = 1.0 * DriveConstants.MAX_LINEAR_SPEED));
+    m_driverController.R2().onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
 
     m_driverController.cross().whileTrue(m_aimingCommands.alignWithHub());
     m_driverController.circle().whileTrue(m_aimingCommands.alignWithTower());
@@ -156,7 +155,7 @@ public class RobotContainer {
   private void configureOperatorControllers() {
     m_operatorController
         .x()
-        .onTrue(Commands.runOnce(() -> m_shooter.runLeftMotorTest(100), m_shooter));
+        .whileTrue(Commands.runOnce(() -> m_shooter.runLeftMotorTest(500), m_shooter));
 
     // m_operatorController.y().onTrue(Commands.run(() -> m_shooter.runRightMotorTest(10),
     // m_shooter));
@@ -165,10 +164,16 @@ public class RobotContainer {
     m_operatorController.b().onTrue(Commands.runOnce(() -> m_shooter.stopMotor(), m_shooter));
     m_operatorController
         .y()
-        .toggleOnTrue(Commands.run(() -> m_shooter.runLeftMotor(-0.9, -0.5), m_shooter));
+        .toggleOnTrue(Commands.run(() -> m_shooter.runLeftMotor(.9, 0), m_shooter));
     m_operatorController
         .leftTrigger()
         .whileTrue(Commands.run(() -> m_intake.runSpinner(0.2), m_intake));
+    m_operatorController
+        .rightTrigger()
+        .whileTrue(
+            new ParallelCommandGroup(
+                Commands.run(() -> m_shooter.shootBall(400), m_shooter),
+                Commands.run(() -> m_hopper.runHopper(), m_hopper)));
   }
 
   public Command getAutonomousCommand() {
@@ -193,7 +198,7 @@ public class RobotContainer {
    * @return The linear deadband in meters per second.
    */
   public double getDeadband() {
-    return m_robotSpeed * 0.1;
+    return m_robotSpeed * 0.15;
   }
 
   /**
@@ -203,7 +208,7 @@ public class RobotContainer {
    * @return The rotational deadband in radians per second.
    */
   public double getRotationalDeadband() {
-    return DriveConstants.MAX_ANGULAR_VELOCITY * 0.1 * m_robotSpeed;
+    return DriveConstants.MAX_ANGULAR_VELOCITY * 0.15 * m_robotSpeed;
   }
 
   public double getVelocityX() {

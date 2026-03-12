@@ -66,7 +66,8 @@ public class Shooter extends SubsystemBase {
         .idleMode(IdleMode.kCoast)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .p(ShooterConstants.K_P_SHOOTER);
+        .p(ShooterConstants.K_P_SHOOTER)
+        .d(0.1);
     m_shooterLeftMotor.configure(
         shooterLeftMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -85,6 +86,7 @@ public class Shooter extends SubsystemBase {
     SparkFlexConfig kickerMotorConfig = new SparkFlexConfig();
     kickerMotorConfig
         .smartCurrentLimit(ShooterConstants.CURRENT_LIMIT)
+        .inverted(true)
         .idleMode(IdleMode.kBrake)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
@@ -141,6 +143,11 @@ public class Shooter extends SubsystemBase {
     m_shooterLeftMotor.stopMotor();
     m_shooterRightMotor.stopMotor();
     m_kickerMotor.stopMotor();
+  }
+
+  public void shootBall(double setpoint) {
+    m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
+    m_kickerMotor.set(0.4);
   }
 
   public void rampUpShooter() {

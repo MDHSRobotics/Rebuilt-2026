@@ -41,9 +41,9 @@ public class Intake extends SubsystemBase {
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
   private final NetworkTable m_table = m_inst.getTable("Intake");
   private final DoublePublisher m_intakeLeftPositionPub =
-      m_inst.getDoubleTopic("Intake Current Position ").publish();
+      m_inst.getDoubleTopic("Left Intake Current Position ").publish();
   private final DoublePublisher m_intakeRightPositionPub =
-      m_inst.getDoubleTopic("Intake Current Position ").publish();
+      m_inst.getDoubleTopic("Right Intake Current Position ").publish();
   private final DoublePublisher m_spinnerSpeedPub =
       m_inst.getDoubleTopic("Spinner Motors Speed ").publish();
   private final DoublePublisher m_leftTargetPositionPub =
@@ -85,7 +85,7 @@ public class Intake extends SubsystemBase {
         intakeLeftConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
     SparkFlexConfig intakeSpinnerConfig = new SparkFlexConfig();
-    intakeSpinnerConfig.smartCurrentLimit(IntakeConstants.CURRENT_LIMIT).idleMode(IdleMode.kBrake);
+    intakeSpinnerConfig.smartCurrentLimit(IntakeConstants.CURRENT_LIMIT).idleMode(IdleMode.kCoast);
     m_spinnerMotor.configure(
         intakeSpinnerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
