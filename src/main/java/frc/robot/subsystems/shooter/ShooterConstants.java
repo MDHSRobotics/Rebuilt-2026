@@ -16,7 +16,8 @@ public class ShooterConstants extends SubsystemBase {
   public static final int CURRENT_LIMIT = 80;
 
   /* Shooter Motors P and D Constants */
-  public static final double K_P_SHOOTER = 0.001;
+  public static final double K_P_SHOOTER = 0.0015;
+  public static final double K_D_SHOOTER = 0.0005;
 
   /* Kicker Motor P constant */
   public static final double K_P_KICKER = 0.5;

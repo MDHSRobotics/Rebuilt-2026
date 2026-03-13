@@ -7,15 +7,18 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.commands.AimingCommand;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drive.DriveConstants;
@@ -24,10 +27,14 @@ import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.util.Aiming;
+import frc.robot.util.LimelightHelpers;
 
 public class RobotContainer {
   // Robot Speed from 0% to 100%
   private double m_robotSpeed = 1.0;
+
+  private double m_testShooterRPM = 2500;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   // private final DriveWithSetpointGeneration m_drive =
@@ -80,7 +87,7 @@ public class RobotContainer {
                 m_drive
                     .withVelocityX(getVelocityX())
                     .withVelocityY(getVelocityY())
-                    .withRotationalRate(getRotationalRate())
+                    .withRotationalRate(getRotationalRate() * 0.5)
                     .withRotationalDeadband(getRotationalDeadband())));
 
     // Idle while the robot is disabled. This ensures the configured
@@ -167,13 +174,37 @@ public class RobotContainer {
         .toggleOnTrue(Commands.run(() -> m_shooter.runLeftMotor(.9, 0), m_shooter));
     m_operatorController
         .leftTrigger()
-        .whileTrue(Commands.run(() -> m_intake.runSpinner(0.2), m_intake));
+        .whileTrue(Commands.run(() -> m_intake.runSpinner(0.6), m_intake));
     m_operatorController
         .rightTrigger()
         .whileTrue(
             new ParallelCommandGroup(
-                Commands.run(() -> m_shooter.shootBall(400), m_shooter),
+                Commands.run(() -> m_shooter.shootBall(m_testShooterRPM), m_shooter),
                 Commands.run(() -> m_hopper.runHopper(), m_hopper)));
+    // Lock on to the Hub
+    m_operatorController
+        .povUp()
+        .toggleOnTrue(
+            new ParallelCommandGroup(
+                m_drivetrain.applyRequest(
+                    () ->
+                        m_drive
+                            .withVelocityX(
+                                -m_driverController.getLeftY() * DriveConstants.MAX_LINEAR_SPEED)
+                            .withVelocityY(
+                                -m_driverController.getLeftX() * DriveConstants.MAX_LINEAR_SPEED)
+                            .withRotationalRate(
+                                Aiming.getYawTxAdjustment(
+                                    LimelightHelpers.getTX(VisionConstants.FRONT_LIMELIGHT_NAME)))
+                            .withRotationalDeadband(getRotationalDeadband()))));
+    m_operatorController
+        .rightBumper()
+        .toggleOnTrue(
+            Commands.run(() -> m_shooter.rampUpShooter(m_testShooterRPM, true), m_shooter));
+
+    m_operatorController.povLeft().onTrue(new InstantCommand(() -> changeTestRpm(-100)));
+
+    m_operatorController.povRight().onTrue(new InstantCommand(() -> changeTestRpm(100)));
   }
 
   public Command getAutonomousCommand() {
@@ -212,14 +243,26 @@ public class RobotContainer {
   }
 
   public double getVelocityX() {
-    return -m_driverController.getLeftY() * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
+    return m_driverController.getLeftY() * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
   }
 
   public double getVelocityY() {
-    return -m_driverController.getLeftX() * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
+    return m_driverController.getLeftX() * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
   }
 
   public double getRotationalRate() {
     return -m_driverController.getRightX() * DriveConstants.MAX_ANGULAR_VELOCITY * m_robotSpeed;
+  }
+
+  public void resetFieldPosition(Pose2d position) {
+    m_drivetrain.resetPose(position);
+  }
+
+  public void resetRobotRotation(Rotation2d rotation) {
+    m_drivetrain.resetRotation(rotation);
+  }
+
+  public void changeTestRpm(double val) {
+    m_testShooterRPM += val;
   }
 }

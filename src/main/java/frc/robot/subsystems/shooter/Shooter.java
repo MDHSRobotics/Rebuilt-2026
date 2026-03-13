@@ -67,7 +67,7 @@ public class Shooter extends SubsystemBase {
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .p(ShooterConstants.K_P_SHOOTER)
-        .d(0.1);
+        .d(ShooterConstants.K_D_SHOOTER);
     m_shooterLeftMotor.configure(
         shooterLeftMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -108,7 +108,7 @@ public class Shooter extends SubsystemBase {
     double targetOffsetAngle_Vertical = ty.getDouble(0.0);
 
     double angleToGoalDegrees = VisionConstants.LIMELIGHT_MOUNT_ANGLE + targetOffsetAngle_Vertical;
-    double angleToGoalRadians = angleToGoalDegrees * (Math.PI / 180.0);
+    double angleToGoalRadians = Math.toRadians(angleToGoalDegrees);
 
     // calculate distance
     distanceFromLimelightToAprilTag =
@@ -125,7 +125,6 @@ public class Shooter extends SubsystemBase {
 
   public void runLeftMotorTest(double setpoint) {
     m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
-    m_shooterTargetSpeedPub.set(setpoint);
   }
 
   public void runRightMotorTest(double setpoint) {
@@ -147,32 +146,39 @@ public class Shooter extends SubsystemBase {
 
   public void shootBall(double setpoint) {
     m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
+    m_shooterTargetSpeedPub.set(setpoint);
     m_kickerMotor.set(0.4);
   }
 
-  public void rampUpShooter() {
+  public void rampUpShooter(double rpm, boolean test) {
     double tagID =
         NetworkTableInstance.getDefault().getTable("limelight").getEntry("tid").getDouble(0);
+    double targetSpeed = rpm;
+    m_shooterTargetSpeedPub.set(targetSpeed);
     Optional<Alliance> alliance = DriverStation.getAlliance();
     if (alliance.isEmpty()) {
       return;
-    } else if (alliance.get() == Alliance.Blue) {
-      if (isHubActive() && (tagID == 26 || tagID == 25)) {
-        m_leftShooterMotorController.setSetpoint(100, ControlType.kVelocity);
-        m_kickerMotorController.setSetpoint(100, ControlType.kVelocity);
+    }
+    boolean hubActive = isHubActive() || test;
+    if (alliance.get() == Alliance.Blue) {
+      if (hubActive) { // && (tagID == 26 || tagID == 25)) {
+        m_leftShooterMotorController.setSetpoint(targetSpeed, ControlType.kVelocity);
+        m_leftShooterSpeedPub.set(m_leftShooterMotorEncoder.getVelocity());
       } else {
         m_shooterLeftMotor.stopMotor();
         m_shooterRightMotor.stopMotor();
         m_kickerMotor.stopMotor();
+        m_leftShooterSpeedPub.set(m_leftShooterMotorEncoder.getVelocity());
       }
     } else if (alliance.get() == Alliance.Red) {
-      if (isHubActive() && (tagID == 9 || tagID == 10)) {
-        m_leftShooterMotorController.setSetpoint(100, ControlType.kVelocity);
-        m_kickerMotorController.setSetpoint(100, ControlType.kVelocity);
+      if (hubActive) { // && (tagID == 9 || tagID == 10)) {
+        m_leftShooterMotorController.setSetpoint(targetSpeed, ControlType.kVelocity);
+        m_leftShooterSpeedPub.set(m_leftShooterMotorEncoder.getVelocity());
       } else {
         m_shooterLeftMotor.stopMotor();
         m_shooterRightMotor.stopMotor();
         m_kickerMotor.stopMotor();
+        m_leftShooterSpeedPub.set(m_leftShooterMotorEncoder.getVelocity());
       }
     }
   }
@@ -227,7 +233,7 @@ public class Shooter extends SubsystemBase {
       // Shift 4
       return !shift1Active;
     } else {
-      return false;
+      return true;
     }
   }
 }

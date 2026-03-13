@@ -2,8 +2,8 @@ package frc.robot.util;
 
 import edu.wpi.first.math.controller.PIDController;
 
-public class Aimming {
-  private static PIDController yawPID = new PIDController(0, 0, 0);
+public class Aiming {
+  private static PIDController yawPID = new PIDController(0.15, 0, 0);
 
   /**
    * @param lensHeight Distance from the floor to the Limelight's lens in inches

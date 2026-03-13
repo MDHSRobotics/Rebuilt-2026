@@ -4,13 +4,18 @@
 
 package frc.robot;
 
+import static edu.wpi.first.units.Units.Meters;
+
 import com.ctre.phoenix6.HootAutoReplay;
 import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.FollowPathCommand;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
@@ -23,6 +28,7 @@ public class Robot extends TimedRobot {
 
   private final RobotContainer m_robotContainer;
   private DoublePublisher m_matchTimePub;
+  private boolean m_hasAppliedRobotRotation;
 
   /* log and replay timestamp and joystick data */
   private final HootAutoReplay m_timeAndJoystickReplay =
@@ -67,6 +73,7 @@ public class Robot extends TimedRobot {
     DriverStation.startDataLog(DataLogManager.getLog(), true);
     URCL.start();
     FollowPathCommand.warmupCommand().schedule();
+    m_hasAppliedRobotRotation = false;
   }
 
   @Override
@@ -80,7 +87,18 @@ public class Robot extends TimedRobot {
   public void disabledInit() {}
 
   @Override
-  public void disabledPeriodic() {}
+  public void disabledPeriodic() {
+    if (!m_hasAppliedRobotRotation) {
+      Alliance alliance = DriverStation.getAlliance().orElse(null);
+      if (alliance == Alliance.Blue) {
+        m_robotContainer.resetRobotRotation(Rotation2d.k180deg);
+        m_hasAppliedRobotRotation = true;
+      } else if (alliance == Alliance.Red) {
+        m_robotContainer.resetRobotRotation(Rotation2d.kZero);
+        m_hasAppliedRobotRotation = true;
+      }
+    }
+  }
 
   @Override
   public void disabledExit() {}
@@ -94,7 +112,7 @@ public class Robot extends TimedRobot {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
 
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 2);
     // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
     // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
@@ -112,7 +130,7 @@ public class Robot extends TimedRobot {
       CommandScheduler.getInstance().cancel(m_autonomousCommand);
     }
 
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 2);
     // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
     // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
@@ -127,10 +145,12 @@ public class Robot extends TimedRobot {
   @Override
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 2);
     // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
     // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
+    m_robotContainer.resetFieldPosition(
+        new Pose2d(Meters.of(10), Meters.of(5), Rotation2d.fromDegrees(180)));
   }
 
   @Override

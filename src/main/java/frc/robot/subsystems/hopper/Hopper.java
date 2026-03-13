@@ -35,7 +35,7 @@ public class Hopper extends SubsystemBase {
   }
 
   public void runHopper() {
-    m_hopperMotor.set(.4);
+    m_hopperMotor.set(.8);
     m_hopperSpeedPub.set(m_hopperEncoder.getVelocity());
   }
 
