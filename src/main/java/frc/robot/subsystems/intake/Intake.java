@@ -2,6 +2,7 @@ package frc.robot.subsystems.intake;
 
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -35,23 +36,23 @@ public class Intake extends SubsystemBase {
   // Encoders
   private final AbsoluteEncoder m_intakeLeftEncoder = m_intakeLeftMotor.getAbsoluteEncoder();
   private final AbsoluteEncoder m_intakeRightEncoder = m_intakeRightMotor.getAbsoluteEncoder();
-  private final AbsoluteEncoder m_spinnerEncoder = m_spinnerMotor.getAbsoluteEncoder();
+  private final RelativeEncoder m_spinnerEncoder = m_spinnerMotor.getEncoder();
 
   // Networktables data
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
   private final NetworkTable m_table = m_inst.getTable("Intake");
-  private final DoublePublisher m_intakeLeftPositionPub =
+  private final DoublePublisher m_leftCurrentPositionPub =
       m_inst.getDoubleTopic("Left Intake Current Position ").publish();
-  private final DoublePublisher m_intakeRightPositionPub =
+  private final DoublePublisher m_rightCurrentPositionPub =
       m_inst.getDoubleTopic("Right Intake Current Position ").publish();
-  private final DoublePublisher m_spinnerSpeedPub =
-      m_inst.getDoubleTopic("Spinner Motors Speed ").publish();
   private final DoublePublisher m_leftTargetPositionPub =
       m_table.getDoubleTopic("Left Target Position (Rotations)").publish();
   private final DoublePublisher m_rightTargetPositionPub =
       m_table.getDoubleTopic("Right Target Position (Rotations)").publish();
-  private final DoublePublisher m_targetSpeedPub =
-      m_table.getDoubleTopic("Target Speed (RPM)").publish();
+  private final DoublePublisher m_spinnerCurrentVelocityPub =
+      m_inst.getDoubleTopic("Spinner Motor Velocity ").publish();
+  private final DoublePublisher m_spinnerTargetSpeedPub =
+      m_table.getDoubleTopic("Spinner Target Speed (RPM)").publish();
 
   public Intake() {
     SparkFlexConfig intakeRightConfig = new SparkFlexConfig();
@@ -92,19 +93,22 @@ public class Intake extends SubsystemBase {
 
   @Override
   public void periodic() {
-    double position = m_intakeLeftEncoder.getPosition();
-    double velocity = m_spinnerEncoder.getVelocity();
-    m_intakeLeftPositionPub.set(position);
-    m_spinnerSpeedPub.set(velocity);
+    /* Logging */
+    m_leftTargetPositionPub.set(m_intakeLeftController.getSetpoint());
+    m_leftCurrentPositionPub.set(m_intakeLeftEncoder.getPosition());
+    m_rightTargetPositionPub.set(m_intakeRightController.getSetpoint());
+    m_rightCurrentPositionPub.set(m_intakeRightEncoder.getPosition());
+    m_spinnerTargetSpeedPub.set(m_spinnerMotor.get());
+    m_spinnerCurrentVelocityPub.set(m_spinnerEncoder.getVelocity());
   }
 
-  public void disableMotors() {
+  public void stopMotors() {
     m_intakeRightMotor.stopMotor();
     m_intakeLeftMotor.stopMotor();
     m_spinnerMotor.stopMotor();
   }
 
-  public void runMotor(
+  public void runMotors(
       double leftIntakeMotorPower, double rightIntakeMotorPower, double spinnerMotorPower) {
     m_intakeRightMotor.set(leftIntakeMotorPower);
     m_intakeLeftMotor.set(rightIntakeMotorPower);
@@ -120,12 +124,6 @@ public class Intake extends SubsystemBase {
     m_intakeRightController.setSetpoint(
         IntakeConstants.PICKUP_POSITION_RIGHT, ControlType.kPosition);
     m_spinnerController.setSetpoint(IntakeConstants.INTAKE_SPINNERS_SPEED, ControlType.kVelocity);
-    m_intakeLeftPositionPub.set(m_intakeLeftEncoder.getPosition());
-    m_intakeRightPositionPub.set(m_intakeRightEncoder.getPosition());
-    m_spinnerSpeedPub.set(m_spinnerEncoder.getVelocity());
-    m_leftTargetPositionPub.set(IntakeConstants.PICKUP_POSITION_LEFT);
-    m_rightTargetPositionPub.set(IntakeConstants.PICKUP_POSITION_RIGHT);
-    m_targetSpeedPub.set(IntakeConstants.INTAKE_SPINNERS_SPEED);
   }
 
   public void stowedIntake() {
@@ -133,11 +131,5 @@ public class Intake extends SubsystemBase {
     m_intakeRightController.setSetpoint(
         IntakeConstants.STOWED_POSITION_RIGHT, ControlType.kPosition);
     m_spinnerMotor.stopMotor();
-    m_intakeLeftPositionPub.set(m_intakeLeftEncoder.getPosition());
-    m_intakeRightPositionPub.set(m_intakeRightEncoder.getPosition());
-    m_spinnerSpeedPub.set(m_spinnerEncoder.getVelocity());
-    m_leftTargetPositionPub.set(IntakeConstants.STOWED_POSITION_LEFT);
-    m_rightTargetPositionPub.set(IntakeConstants.STOWED_POSITION_RIGHT);
-    m_targetSpeedPub.set(0);
   }
 }

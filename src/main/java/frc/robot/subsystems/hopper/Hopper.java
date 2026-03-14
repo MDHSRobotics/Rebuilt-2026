@@ -39,7 +39,7 @@ public class Hopper extends SubsystemBase {
     m_hopperSpeedPub.set(m_hopperEncoder.getVelocity());
   }
 
-  public void stopMotor() {
+  public void stopMotors() {
     m_hopperMotor.stopMotor();
   }
 }

@@ -37,21 +37,21 @@ public class Shooter extends SubsystemBase {
       m_shooterLeftMotor.getClosedLoopController();
   private final SparkClosedLoopController m_rightShooterMotorController =
       m_shooterRightMotor.getClosedLoopController();
-  private final SparkClosedLoopController m_kickerMotorController =
-      m_kickerMotor.getClosedLoopController();
 
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
   private final NetworkTable m_table = m_inst.getTable("Shooter");
   private final NetworkTable m_limelight = m_inst.getTable("limelight");
 
-  private final DoublePublisher m_leftShooterSpeedPub =
-      m_table.getDoubleTopic("Left Shooter Motor Speed ").publish();
-  private final DoublePublisher m_RightShooterSpeedPub =
-      m_table.getDoubleTopic("Right Shooter Motor Speed ").publish();
-  private final DoublePublisher m_kickerSpeedPub =
-      m_table.getDoubleTopic("Kicker Motor Speed ").publish();
-  private final DoublePublisher m_shooterTargetSpeedPub =
-      m_table.getDoubleTopic("Shooter Motor Target Speed ").publish();
+  private final DoublePublisher m_leftCurrentVelocityPub =
+      m_table.getDoubleTopic("Left Shooter Current Velocity ").publish();
+  private final DoublePublisher m_rightCurrentVelocityPub =
+      m_table.getDoubleTopic("Right Shooter Current Velocity ").publish();
+  private final DoublePublisher m_leftTargetVelocityPub =
+      m_table.getDoubleTopic("Left Shooter Target Velocity ").publish();
+  private final DoublePublisher m_rightTargetVelocityPub =
+      m_table.getDoubleTopic("Right Shooter Target Velocity ").publish();
+  private final DoublePublisher m_kickerCurrentVelocityPub =
+      m_table.getDoubleTopic("Kicker Motor Current Velocity ").publish();
   private final DoublePublisher m_distanceRobotToTagPub =
       m_table.getDoubleTopic("Distance From Robot to AprilTag ").publish();
 
@@ -66,8 +66,7 @@ public class Shooter extends SubsystemBase {
         .idleMode(IdleMode.kCoast)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .p(ShooterConstants.K_P_SHOOTER)
-        .d(ShooterConstants.K_D_SHOOTER);
+        .pid(ShooterConstants.K_P_SHOOTER, ShooterConstants.K_I_SHOOTER, ShooterConstants.K_D_SHOOTER);
     m_shooterLeftMotor.configure(
         shooterLeftMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -78,7 +77,7 @@ public class Shooter extends SubsystemBase {
         .idleMode(IdleMode.kCoast)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .p(ShooterConstants.K_P_SHOOTER);
+        .pid(ShooterConstants.K_P_SHOOTER, ShooterConstants.K_I_SHOOTER, ShooterConstants.K_D_SHOOTER);
     m_shooterRightMotor.configure(
         shooterRightMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -87,22 +86,20 @@ public class Shooter extends SubsystemBase {
     kickerMotorConfig
         .smartCurrentLimit(ShooterConstants.CURRENT_LIMIT)
         .inverted(true)
-        .idleMode(IdleMode.kBrake)
-        .closedLoop
-        .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .p(ShooterConstants.K_P_KICKER);
+        .idleMode(IdleMode.kBrake);
     m_kickerMotor.configure(
         kickerMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
   @Override
   public void periodic() {
-    double leftShooterVelocity = m_leftShooterMotorEncoder.getVelocity();
-    m_leftShooterSpeedPub.set(leftShooterVelocity);
-    double rightShooterVelocity = m_rightShooterMotorEncoder.getVelocity();
-    m_RightShooterSpeedPub.set(rightShooterVelocity);
-    double kickerVelocity = m_kickerMotorEncoder.getVelocity();
-    m_kickerSpeedPub.set(kickerVelocity);
+    /* Logging */
+    m_leftTargetVelocityPub.set(m_leftShooterMotorController.getSetpoint());
+    m_leftCurrentVelocityPub.set(m_leftShooterMotorEncoder.getVelocity());
+    m_rightTargetVelocityPub.set(m_rightShooterMotorController.getSetpoint());
+    m_rightCurrentVelocityPub.set(m_rightShooterMotorEncoder.getVelocity());
+    m_kickerCurrentVelocityPub.set(m_kickerMotorEncoder.getVelocity());
+    
 
     NetworkTableEntry ty = m_limelight.getEntry("ty");
     double targetOffsetAngle_Vertical = ty.getDouble(0.0);
@@ -129,16 +126,14 @@ public class Shooter extends SubsystemBase {
 
   public void runRightMotorTest(double setpoint) {
     m_rightShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
-    m_shooterTargetSpeedPub.set(setpoint);
   }
 
   public void runMotorsTest(double setpoint) {
     m_rightShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
     m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
-    m_shooterTargetSpeedPub.set(setpoint);
   }
 
-  public void stopMotor() {
+  public void stopMotors() {
     m_shooterLeftMotor.stopMotor();
     m_shooterRightMotor.stopMotor();
     m_kickerMotor.stopMotor();
@@ -146,15 +141,18 @@ public class Shooter extends SubsystemBase {
 
   public void shootBall(double setpoint) {
     m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
-    m_shooterTargetSpeedPub.set(setpoint);
-    m_kickerMotor.set(0.4);
+    m_kickerMotor.set(ShooterConstants.KICKER_SPEED);
   }
 
   public void rampUpShooter(double rpm, boolean test) {
+    // Account for whether we are in a testing mode, or in an actual match or practice match
+    if (test) {
+      m_leftShooterMotorController.setSetpoint(rpm, ControlType.kVelocity);
+      return;
+    }
     double tagID =
         NetworkTableInstance.getDefault().getTable("limelight").getEntry("tid").getDouble(0);
     double targetSpeed = rpm;
-    m_shooterTargetSpeedPub.set(targetSpeed);
     Optional<Alliance> alliance = DriverStation.getAlliance();
     if (alliance.isEmpty()) {
       return;
@@ -163,22 +161,18 @@ public class Shooter extends SubsystemBase {
     if (alliance.get() == Alliance.Blue) {
       if (hubActive) { // && (tagID == 26 || tagID == 25)) {
         m_leftShooterMotorController.setSetpoint(targetSpeed, ControlType.kVelocity);
-        m_leftShooterSpeedPub.set(m_leftShooterMotorEncoder.getVelocity());
       } else {
         m_shooterLeftMotor.stopMotor();
         m_shooterRightMotor.stopMotor();
         m_kickerMotor.stopMotor();
-        m_leftShooterSpeedPub.set(m_leftShooterMotorEncoder.getVelocity());
       }
     } else if (alliance.get() == Alliance.Red) {
       if (hubActive) { // && (tagID == 9 || tagID == 10)) {
         m_leftShooterMotorController.setSetpoint(targetSpeed, ControlType.kVelocity);
-        m_leftShooterSpeedPub.set(m_leftShooterMotorEncoder.getVelocity());
       } else {
         m_shooterLeftMotor.stopMotor();
         m_shooterRightMotor.stopMotor();
         m_kickerMotor.stopMotor();
-        m_leftShooterSpeedPub.set(m_leftShooterMotorEncoder.getVelocity());
       }
     }
   }

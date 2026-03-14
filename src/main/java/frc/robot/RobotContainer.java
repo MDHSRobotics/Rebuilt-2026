@@ -115,9 +115,11 @@ public class RobotContainer {
 
     // Reset the field-centric heading on left bumper press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
-    m_shooter.setDefaultCommand(new RunCommand(() -> m_shooter.stopMotor(), m_shooter));
-    m_intake.setDefaultCommand(new RunCommand(() -> m_intake.disableMotors(), m_intake));
-    m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stopMotor(), m_hopper));
+
+    // Subsystem Defaults
+    m_shooter.setDefaultCommand(new RunCommand(() -> m_shooter.stopMotors(), m_shooter));
+    m_intake.setDefaultCommand(new RunCommand(() -> m_intake.stopMotors(), m_intake));
+    m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stopMotors(), m_hopper));
   }
 
   /**
@@ -168,13 +170,15 @@ public class RobotContainer {
     // m_shooter));
     // m_operatorController.a().onTrue(Commands.run(() -> m_shooter.runMotorsTest(10), m_shooter));
 
-    m_operatorController.b().onTrue(Commands.runOnce(() -> m_shooter.stopMotor(), m_shooter));
+    m_operatorController.b().onTrue(Commands.runOnce(() -> m_shooter.stopMotors(), m_shooter));
     m_operatorController
         .y()
         .toggleOnTrue(Commands.run(() -> m_shooter.runLeftMotor(.9, 0), m_shooter));
     m_operatorController
         .leftTrigger()
         .whileTrue(Commands.run(() -> m_intake.runSpinner(0.6), m_intake));
+
+    // Shoot Ball
     m_operatorController
         .rightTrigger()
         .whileTrue(
