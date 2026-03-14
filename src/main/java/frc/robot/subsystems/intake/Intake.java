@@ -46,13 +46,15 @@ public class Intake extends SubsystemBase {
   private final DoublePublisher m_rightCurrentPositionPub =
       m_inst.getDoubleTopic("Right Intake Current Position ").publish();
   private final DoublePublisher m_leftTargetPositionPub =
-      m_table.getDoubleTopic("Left Target Position (Rotations)").publish();
+      m_inst.getDoubleTopic("Left Target Position (Rotations)").publish();
   private final DoublePublisher m_rightTargetPositionPub =
-      m_table.getDoubleTopic("Right Target Position (Rotations)").publish();
+      m_inst.getDoubleTopic("Right Target Position (Rotations)").publish();
   private final DoublePublisher m_spinnerCurrentVelocityPub =
       m_inst.getDoubleTopic("Spinner Motor Velocity ").publish();
   private final DoublePublisher m_spinnerTargetSpeedPub =
-      m_table.getDoubleTopic("Spinner Target Speed (RPM)").publish();
+      m_inst.getDoubleTopic("Spinner Target Speed (RPM)").publish();
+
+  private boolean deployed = false;
 
   public Intake() {
     SparkFlexConfig intakeRightConfig = new SparkFlexConfig();
@@ -119,17 +121,21 @@ public class Intake extends SubsystemBase {
     m_spinnerMotor.set(power);
   }
 
-  public void intakeBall() {
+  public void deployedPosition() {
+    deployed = true;
     m_intakeLeftController.setSetpoint(IntakeConstants.PICKUP_POSITION_LEFT, ControlType.kPosition);
     m_intakeRightController.setSetpoint(
         IntakeConstants.PICKUP_POSITION_RIGHT, ControlType.kPosition);
-    m_spinnerController.setSetpoint(IntakeConstants.INTAKE_SPINNERS_SPEED, ControlType.kVelocity);
   }
 
-  public void stowedIntake() {
+  public void stowedPosition() {
+    deployed = false;
     m_intakeLeftController.setSetpoint(IntakeConstants.STOWED_POSITION_LEFT, ControlType.kPosition);
     m_intakeRightController.setSetpoint(
         IntakeConstants.STOWED_POSITION_RIGHT, ControlType.kPosition);
-    m_spinnerMotor.stopMotor();
+  }
+
+  public boolean isDeployed() {
+    return deployed;
   }
 }

@@ -162,21 +162,26 @@ public class RobotContainer {
    * ">this controller map</a> to update and view the current controls.
    */
   private void configureOperatorControllers() {
-    m_operatorController
-        .x()
-        .whileTrue(Commands.runOnce(() -> m_shooter.runLeftMotorTest(500), m_shooter));
+    // m_operatorController
+    //    .x()
+    //    .whileTrue(Commands.runOnce(() -> m_shooter.runLeftMotorTest(500), m_shooter));
 
     // m_operatorController.y().onTrue(Commands.run(() -> m_shooter.runRightMotorTest(10),
     // m_shooter));
     // m_operatorController.a().onTrue(Commands.run(() -> m_shooter.runMotorsTest(10), m_shooter));
+    // m_operatorController.b().onTrue(Commands.runOnce(() -> m_shooter.stopMotors(), m_shooter));
 
-    m_operatorController.b().onTrue(Commands.runOnce(() -> m_shooter.stopMotors(), m_shooter));
+    // m_operatorController
+    //    .y()
+    //    .toggleOnTrue(Commands.run(() -> m_shooter.runLeftMotor(.9, 0), m_shooter));
+
+    // **Shooter Commands**
+
+    // Ramp Up Shooter
     m_operatorController
-        .y()
-        .toggleOnTrue(Commands.run(() -> m_shooter.runLeftMotor(.9, 0), m_shooter));
-    m_operatorController
-        .leftTrigger()
-        .whileTrue(Commands.run(() -> m_intake.runSpinner(0.6), m_intake));
+        .rightBumper()
+        .toggleOnTrue(
+            Commands.run(() -> m_shooter.rampUpShooter(m_testShooterRPM, true), m_shooter));
 
     // Shoot Ball
     m_operatorController
@@ -184,7 +189,37 @@ public class RobotContainer {
         .whileTrue(
             new ParallelCommandGroup(
                 Commands.run(() -> m_shooter.shootBall(m_testShooterRPM), m_shooter),
-                Commands.run(() -> m_hopper.runHopper(), m_hopper)));
+                Commands.run(() -> m_hopper.runHopper(0.8), m_hopper)));
+
+    // **Intake Commands**
+
+    // Deploy and Stow Intake
+    m_operatorController
+        .leftBumper()
+        .and(() -> (!m_intake.isDeployed()))
+        .onTrue(Commands.runOnce(() -> m_intake.deployedPosition(), m_intake));
+
+    m_operatorController
+        .leftBumper()
+        .and(() -> (m_intake.isDeployed()))
+        .onTrue(Commands.runOnce(() -> m_intake.stowedPosition(), m_intake));
+
+    // Spin Intake
+    m_operatorController
+        .leftTrigger()
+        .toggleOnTrue(
+            new ParallelCommandGroup(
+                Commands.run(() -> m_intake.runSpinner(0.7), m_intake),
+                Commands.run(() -> m_hopper.runHopper(0.2))));
+
+    // Spin Intake Reverse
+    m_operatorController
+        .x()
+        .toggleOnTrue(
+            new ParallelCommandGroup(
+                Commands.run(() -> m_intake.runSpinner(-0.9), m_intake),
+                Commands.run(() -> m_hopper.runHopper(-0.8))));
+
     // Lock on to the Hub
     m_operatorController
         .povUp()
@@ -201,11 +236,8 @@ public class RobotContainer {
                                 Aiming.getYawTxAdjustment(
                                     LimelightHelpers.getTX(VisionConstants.FRONT_LIMELIGHT_NAME)))
                             .withRotationalDeadband(getRotationalDeadband()))));
-    m_operatorController
-        .rightBumper()
-        .toggleOnTrue(
-            Commands.run(() -> m_shooter.rampUpShooter(m_testShooterRPM, true), m_shooter));
 
+    // Change Shooter Trim
     m_operatorController.povLeft().onTrue(new InstantCommand(() -> changeTestRpm(-100)));
 
     m_operatorController.povRight().onTrue(new InstantCommand(() -> changeTestRpm(100)));

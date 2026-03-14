@@ -34,8 +34,8 @@ public class Hopper extends SubsystemBase {
         m_hopperConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
-  public void runHopper() {
-    m_hopperMotor.set(.8);
+  public void runHopper(double speed) {
+    m_hopperMotor.set(speed);
     m_hopperSpeedPub.set(m_hopperEncoder.getVelocity());
   }
 

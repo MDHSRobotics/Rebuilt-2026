@@ -56,6 +56,7 @@ public class Shooter extends SubsystemBase {
       m_table.getDoubleTopic("Distance From Robot to AprilTag ").publish();
 
   private double distanceFromLimelightToAprilTag = 0;
+  private double shooter_trim = 0;
 
   public Shooter() {
 
@@ -64,9 +65,13 @@ public class Shooter extends SubsystemBase {
     shooterLeftMotorConfig
         .smartCurrentLimit(ShooterConstants.CURRENT_LIMIT)
         .idleMode(IdleMode.kCoast)
+        .inverted(true)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .pid(ShooterConstants.K_P_SHOOTER, ShooterConstants.K_I_SHOOTER, ShooterConstants.K_D_SHOOTER);
+        .pid(
+            ShooterConstants.K_P_SHOOTER,
+            ShooterConstants.K_I_SHOOTER,
+            ShooterConstants.K_D_SHOOTER);
     m_shooterLeftMotor.configure(
         shooterLeftMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -75,9 +80,13 @@ public class Shooter extends SubsystemBase {
     shooterRightMotorConfig
         .smartCurrentLimit(ShooterConstants.CURRENT_LIMIT)
         .idleMode(IdleMode.kCoast)
+        .inverted(true)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .pid(ShooterConstants.K_P_SHOOTER, ShooterConstants.K_I_SHOOTER, ShooterConstants.K_D_SHOOTER);
+        .pid(
+            ShooterConstants.K_P_SHOOTER,
+            ShooterConstants.K_I_SHOOTER,
+            ShooterConstants.K_D_SHOOTER);
     m_shooterRightMotor.configure(
         shooterRightMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -99,7 +108,6 @@ public class Shooter extends SubsystemBase {
     m_rightTargetVelocityPub.set(m_rightShooterMotorController.getSetpoint());
     m_rightCurrentVelocityPub.set(m_rightShooterMotorEncoder.getVelocity());
     m_kickerCurrentVelocityPub.set(m_kickerMotorEncoder.getVelocity());
-    
 
     NetworkTableEntry ty = m_limelight.getEntry("ty");
     double targetOffsetAngle_Vertical = ty.getDouble(0.0);
@@ -142,6 +150,10 @@ public class Shooter extends SubsystemBase {
   public void shootBall(double setpoint) {
     m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
     m_kickerMotor.set(ShooterConstants.KICKER_SPEED);
+  }
+
+  public void changeTrim(double amount) {
+    shooter_trim += amount;
   }
 
   public void rampUpShooter(double rpm, boolean test) {
