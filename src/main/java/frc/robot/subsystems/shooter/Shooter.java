@@ -58,6 +58,9 @@ public class Shooter extends SubsystemBase {
   private double distanceFromLimelightToAprilTag = 0;
   private double shooter_trim = 0;
 
+  private double m_leftTargetVelocity = 0;
+  private double m_rightTargetVelocity = 0;
+
   public Shooter() {
 
     // Left Motor Configurations
@@ -103,9 +106,9 @@ public class Shooter extends SubsystemBase {
   @Override
   public void periodic() {
     /* Logging */
-    m_leftTargetVelocityPub.set(m_leftShooterMotorController.getSetpoint());
+    m_leftTargetVelocityPub.set(m_leftTargetVelocity);
     m_leftCurrentVelocityPub.set(m_leftShooterMotorEncoder.getVelocity());
-    m_rightTargetVelocityPub.set(m_rightShooterMotorController.getSetpoint());
+    m_rightTargetVelocityPub.set(m_rightTargetVelocity);
     m_rightCurrentVelocityPub.set(m_rightShooterMotorEncoder.getVelocity());
     m_kickerCurrentVelocityPub.set(m_kickerMotorEncoder.getVelocity());
 
@@ -129,16 +132,16 @@ public class Shooter extends SubsystemBase {
   }
 
   public void runLeftMotorTest(double setpoint) {
-    m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
+    setLeftSetpoint(setpoint);
   }
 
   public void runRightMotorTest(double setpoint) {
-    m_rightShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
+    setRightSetpoint(setpoint);
   }
 
   public void runMotorsTest(double setpoint) {
-    m_rightShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
-    m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
+    setRightSetpoint(setpoint);
+    setLeftSetpoint(setpoint);
   }
 
   public void stopMotors() {
@@ -147,8 +150,8 @@ public class Shooter extends SubsystemBase {
     m_kickerMotor.stopMotor();
   }
 
-  public void shootBall(double setpoint) {
-    m_leftShooterMotorController.setSetpoint(setpoint, ControlType.kVelocity);
+  public void shootBall(double rpm) {
+    setLeftSetpoint(rpm);
     m_kickerMotor.set(ShooterConstants.KICKER_SPEED);
   }
 
@@ -156,10 +159,20 @@ public class Shooter extends SubsystemBase {
     shooter_trim += amount;
   }
 
+  private void setLeftSetpoint(double rpm) {
+    m_leftTargetVelocity = rpm;
+    m_leftShooterMotorController.setSetpoint(rpm, ControlType.kVelocity);
+  }
+
+  private void setRightSetpoint(double rpm) {
+    m_rightTargetVelocity = rpm;
+    m_rightShooterMotorController.setSetpoint(rpm, ControlType.kVelocity);
+  }
+
   public void rampUpShooter(double rpm, boolean test) {
     // Account for whether we are in a testing mode, or in an actual match or practice match
     if (test) {
-      m_leftShooterMotorController.setSetpoint(rpm, ControlType.kVelocity);
+      setLeftSetpoint(rpm);
       return;
     }
     double tagID =
@@ -172,7 +185,7 @@ public class Shooter extends SubsystemBase {
     boolean hubActive = isHubActive() || test;
     if (alliance.get() == Alliance.Blue) {
       if (hubActive) { // && (tagID == 26 || tagID == 25)) {
-        m_leftShooterMotorController.setSetpoint(targetSpeed, ControlType.kVelocity);
+        setLeftSetpoint(rpm);
       } else {
         m_shooterLeftMotor.stopMotor();
         m_shooterRightMotor.stopMotor();
@@ -180,7 +193,7 @@ public class Shooter extends SubsystemBase {
       }
     } else if (alliance.get() == Alliance.Red) {
       if (hubActive) { // && (tagID == 9 || tagID == 10)) {
-        m_leftShooterMotorController.setSetpoint(targetSpeed, ControlType.kVelocity);
+        setLeftSetpoint(rpm);
       } else {
         m_shooterLeftMotor.stopMotor();
         m_shooterRightMotor.stopMotor();
