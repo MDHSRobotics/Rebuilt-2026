@@ -59,6 +59,15 @@ public class Shooter extends SubsystemBase {
   private double distanceFromLimelightToAprilTag = 0;
   private double shooter_trim = 0;
 
+  private final LoggedTunableNumber kP =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_P_SHOOTER);
+  private final LoggedTunableNumber kI =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_I_SHOOTER);
+  private final LoggedTunableNumber kD =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_D_SHOOTER);
+
+  SparkFlexConfig shooterLeftMotorConfig;
+
   private double m_leftTargetVelocity = 0;
   private double m_rightTargetVelocity = 0;
 
@@ -85,9 +94,7 @@ public class Shooter extends SubsystemBase {
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .pid(
-            ShooterConstants.K_P_SHOOTER,
-            ShooterConstants.K_I_SHOOTER,
-            ShooterConstants.K_D_SHOOTER);
+            kP.get(), kI.get(), kD.get());
     m_shooterRightMotor.configure(
         shooterRightMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -133,7 +140,7 @@ public class Shooter extends SubsystemBase {
     m_kickerMotor.set(kickerPower);
   }
 
-  public void runLeftMotorTest(double setpoint) {
+   public void runLeftMotorTest(double setpoint) {
     setLeftSetpoint(setpoint);
   }
 
