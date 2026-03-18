@@ -48,7 +48,7 @@ public class RobotContainer {
           .withRotationalDeadband(getRotationalDeadband()) // Add a 10% deadband
           .withDriveRequestType(
               DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
-  private final SwerveRequest.SwerveDriveBrake brake =
+  private final SwerveRequest.SwerveDriveBrake m_brake =
       new SwerveRequest.SwerveDriveBrake()
           .withDriveRequestType(DriveRequestType.Velocity)
           .withSteerRequestType(SteerRequestType.MotionMagicExpo);
@@ -57,7 +57,7 @@ public class RobotContainer {
   private final Intake m_intake = new Intake();
   private final Hopper m_hopper = new Hopper();
 
-  private final DriveTelemetry m_logger = new DriveTelemetry(m_robotSpeed);
+  private final DriveTelemetry m_logger = new DriveTelemetry(DriveConstants.MAX_LINEAR_SPEED);
 
   /* Controllers  */
   private final CommandPS4Controller m_driverController =
@@ -106,19 +106,9 @@ public class RobotContainer {
     //                     new Rotation2d(
     //                         -m_driverController.getLeftY(), -m_driverController.getLeftX()))));
 
-    // Run SysId routines when holding back/start and X/Y.
-    // Note that each routine should be run exactly once in a single log.
-    // m_driverController.povUp().whileTrue(m_drivetrain.sysIdDynamic(Direction.kForward));
-    // m_driverController.povDown().whileTrue(m_drivetrain.sysIdDynamic(Direction.kReverse));
-    // m_driverController.povRight().whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kForward));
-    // m_driverController.povLeft().whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kReverse));
-
-    // Reset the field-centric heading on left bumper press.
-    m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
-
     // Subsystem Defaults
     m_shooter.setDefaultCommand(new RunCommand(() -> m_shooter.stopMotors(), m_shooter));
-    m_intake.setDefaultCommand(new RunCommand(() -> m_intake.stopMotors(), m_intake));
+    m_intake.setDefaultCommand(new RunCommand(() -> m_intake.stopSpinnerMotors(), m_intake));
     m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stopMotors(), m_hopper));
   }
 
@@ -130,30 +120,21 @@ public class RobotContainer {
   private void configureDriverControllers() {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
-    // m_driverController
-    //     .share()
-    //     .and(m_driverController.triangle())
-    //     .whileTrue(m_drivetrain.sysIdDynamic(Direction.kForward));
-    // m_driverController
-    //     .share()
-    //     .and(m_driverController.square())
-    //     .whileTrue(m_drivetrain.sysIdDynamic(Direction.kReverse));
-    // m_driverController
-    //     .options()
-    //     .and(m_driverController.triangle())
-    //     .whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kForward));
-    // m_driverController
-    //     .options()
-    //     .and(m_driverController.square())
-    //     .whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kReverse));
+    // m_driverController.povUp().whileTrue(m_drivetrain.sysIdDynamic(Direction.kForward));
+    // m_driverController.povDown().whileTrue(m_drivetrain.sysIdDynamic(Direction.kReverse));
+    // m_driverController.povRight().whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kForward));
+    // m_driverController.povLeft().whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kReverse));
 
     // Quarter Speed
     m_driverController.R2().onTrue(Commands.runOnce(() -> m_robotSpeed = 0.25));
 
     m_driverController.R2().onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
 
-    m_driverController.cross().whileTrue(m_aimingCommands.alignWithHub());
+    m_driverController.cross().whileTrue(m_drivetrain.applyRequest(() -> m_brake));
     m_driverController.circle().whileTrue(m_aimingCommands.alignWithTower());
+
+    // Reset the field-centric heading on left bumper press.
+    m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
   }
 
   /**
@@ -194,15 +175,20 @@ public class RobotContainer {
     // **Intake Commands**
 
     // Deploy and Stow Intake
-    m_operatorController
-        .leftBumper()
-        .and(() -> (!m_intake.isDeployed()))
-        .onTrue(Commands.runOnce(() -> m_intake.deployedPosition(), m_intake));
+    // m_operatorController
+    //     .leftBumper()
+    //     .toggleOnTrue(
+    //         new RunCommand(() -> m_intake.deployedPosition(), m_intake)
+    //             .andThen(() -> m_intake.stowedPosition()));
 
     m_operatorController
         .leftBumper()
         .and(() -> (m_intake.isDeployed()))
         .onTrue(Commands.runOnce(() -> m_intake.stowedPosition(), m_intake));
+    m_operatorController
+        .leftBumper()
+        .and(() -> (!m_intake.isDeployed()))
+        .onTrue(Commands.runOnce(() -> m_intake.deployedPosition(), m_intake));
 
     // Spin Intake
     m_operatorController
@@ -265,7 +251,7 @@ public class RobotContainer {
    * @return The linear deadband in meters per second.
    */
   public double getDeadband() {
-    return m_robotSpeed * 0.15;
+    return DriveConstants.MAX_LINEAR_SPEED * 0.1 * m_robotSpeed;
   }
 
   /**
@@ -275,7 +261,7 @@ public class RobotContainer {
    * @return The rotational deadband in radians per second.
    */
   public double getRotationalDeadband() {
-    return DriveConstants.MAX_ANGULAR_VELOCITY * 0.15 * m_robotSpeed;
+    return DriveConstants.MAX_ANGULAR_VELOCITY * 0.1 * m_robotSpeed;
   }
 
   public double getVelocityX() {

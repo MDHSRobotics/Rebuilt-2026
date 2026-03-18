@@ -18,31 +18,31 @@ public class IntakeConstants extends SubsystemBase {
   public static final int CURRENT_LIMIT = 80;
 
   /** The proportional gain for the Intake */
-  public static final double K_P = 0;
+  public static final double K_P = 1;
 
   /**
    * The position that the left motor intake can pick up the ball in rotations. Left and right is
    * determined by looking at the front of the robot
    */
-  public static final double PICKUP_POSITION_LEFT = 0;
+  public static final double PICKUP_POSITION_LEFT = 0.305;
 
   /**
    * The position that the right motor intake can pick up the ball in rotations. Left and right is
    * determined by looking at the front of the robot
    */
-  public static final double PICKUP_POSITION_RIGHT = 0;
+  public static final double PICKUP_POSITION_RIGHT = 0.905;
 
   /**
    * The stowed position of the left motor intake in rotations Left and right is determined by
    * looking at the front of the robot
    */
-  public static final double STOWED_POSITION_LEFT = 0;
+  public static final double STOWED_POSITION_LEFT = 0.75;
 
   /**
    * The stowed position of the right motor intake in rotations Left and right is determined by
    * looking at the front of the robot
    */
-  public static final double STOWED_POSITION_RIGHT = 0;
+  public static final double STOWED_POSITION_RIGHT = 0.440;
 
   /** The intake speed of the spinners in RPM */
   public static final double INTAKE_SPINNERS_SPEED = 0;

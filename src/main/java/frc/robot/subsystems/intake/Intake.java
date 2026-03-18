@@ -96,9 +96,7 @@ public class Intake extends SubsystemBase {
   @Override
   public void periodic() {
     /* Logging */
-    m_leftTargetPositionPub.set(m_intakeLeftController.getSetpoint());
     m_leftCurrentPositionPub.set(m_intakeLeftEncoder.getPosition());
-    m_rightTargetPositionPub.set(m_intakeRightController.getSetpoint());
     m_rightCurrentPositionPub.set(m_intakeRightEncoder.getPosition());
     m_spinnerTargetSpeedPub.set(m_spinnerMotor.get());
     m_spinnerCurrentVelocityPub.set(m_spinnerEncoder.getVelocity());
@@ -126,6 +124,10 @@ public class Intake extends SubsystemBase {
     m_intakeLeftController.setSetpoint(IntakeConstants.PICKUP_POSITION_LEFT, ControlType.kPosition);
     m_intakeRightController.setSetpoint(
         IntakeConstants.PICKUP_POSITION_RIGHT, ControlType.kPosition);
+    m_leftCurrentPositionPub.set(m_intakeLeftEncoder.getPosition());
+    m_rightCurrentPositionPub.set(m_intakeRightEncoder.getPosition());
+    m_leftTargetPositionPub.set(IntakeConstants.PICKUP_POSITION_LEFT);
+    m_rightTargetPositionPub.set(IntakeConstants.PICKUP_POSITION_RIGHT);
   }
 
   public void stowedPosition() {
@@ -133,6 +135,14 @@ public class Intake extends SubsystemBase {
     m_intakeLeftController.setSetpoint(IntakeConstants.STOWED_POSITION_LEFT, ControlType.kPosition);
     m_intakeRightController.setSetpoint(
         IntakeConstants.STOWED_POSITION_RIGHT, ControlType.kPosition);
+    m_leftCurrentPositionPub.set(m_intakeLeftEncoder.getPosition());
+    m_rightCurrentPositionPub.set(m_intakeRightEncoder.getPosition());
+    m_leftTargetPositionPub.set(IntakeConstants.STOWED_POSITION_LEFT);
+    m_rightTargetPositionPub.set(IntakeConstants.STOWED_POSITION_RIGHT);
+  }
+
+  public void stopSpinnerMotors() {
+    m_spinnerMotor.stopMotor();
   }
 
   public boolean isDeployed() {

@@ -17,6 +17,8 @@ public final class Constants {
   /** The update period of the robot in seconds. */
   public static final double UPDATE_PERIOD = 0.02;
 
+  public static final boolean TUNING_MODE = false;
+
   public static class ControllerConstants {
     private ControllerConstants() {}
 
@@ -42,8 +44,8 @@ public final class Constants {
     public static final double FRONT_LIMELIGHT_PITCH = 60;
 
     // These needs to be tested and adjusted later on
-    public static final double FRONT_X_STD_DEV = 0;
-    public static final double FRONT_Y_STD_DEV = 0;
+    public static final double FRONT_X_STD_DEV = 0.04;
+    public static final double FRONT_Y_STD_DEV = 0.0017;
     public static Vector<N3> FRONT_STD_DEVS =
         VecBuilder.fill(FRONT_X_STD_DEV, FRONT_Y_STD_DEV, Double.MAX_VALUE);
 

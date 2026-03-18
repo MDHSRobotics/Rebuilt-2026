@@ -19,6 +19,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.util.LoggedTunableNumber;
 import java.util.Optional;
 
 public class Shooter extends SubsystemBase {
@@ -58,20 +59,26 @@ public class Shooter extends SubsystemBase {
   private double distanceFromLimelightToAprilTag = 0;
   private double shooter_trim = 0;
 
+  private final LoggedTunableNumber kP =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_P_SHOOTER);
+  private final LoggedTunableNumber kI =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_I_SHOOTER);
+  private final LoggedTunableNumber kD =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_D_SHOOTER);
+
+  SparkFlexConfig shooterLeftMotorConfig;
+
   public Shooter() {
 
     // Left Motor Configurations
-    SparkFlexConfig shooterLeftMotorConfig = new SparkFlexConfig();
+    shooterLeftMotorConfig = new SparkFlexConfig();
     shooterLeftMotorConfig
         .smartCurrentLimit(ShooterConstants.CURRENT_LIMIT)
         .idleMode(IdleMode.kCoast)
         .inverted(true)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .pid(
-            ShooterConstants.K_P_SHOOTER,
-            ShooterConstants.K_I_SHOOTER,
-            ShooterConstants.K_D_SHOOTER);
+        .pid(kP.get(), kI.get(), kD.get());
     m_shooterLeftMotor.configure(
         shooterLeftMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -121,6 +128,10 @@ public class Shooter extends SubsystemBase {
                 - VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE)
             / Math.tan(angleToGoalRadians);
     m_distanceRobotToTagPub.set(distanceFromLimelightToAprilTag);
+
+    if (kP.hasChanged() || kI.hasChanged() || kD.hasChanged()) {
+      shooterLeftMotorConfig.closedLoop.pid(kP.get(), kI.get(), kD.get());
+    }
   }
 
   public void runLeftMotor(double power, double kickerPower) {
