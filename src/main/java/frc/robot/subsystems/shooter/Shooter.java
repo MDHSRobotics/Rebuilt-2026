@@ -191,7 +191,7 @@ public class Shooter extends SubsystemBase {
     if (alliance.isEmpty()) {
       return;
     }
-    boolean hubActive = isHubActive() || test;
+    boolean hubActive = test; //|| hubactive()
     if (alliance.get() == Alliance.Blue) {
       if (hubActive) { // && (tagID == 26 || tagID == 25)) {
         setLeftSetpoint(rpm);
@@ -208,60 +208,6 @@ public class Shooter extends SubsystemBase {
         m_shooterRightMotor.stopMotor();
         m_kickerMotor.stopMotor();
       }
-    }
-  }
-
-  /** This method is used toi determine if the Hub is active */
-  public boolean isHubActive() {
-    Optional<Alliance> alliance = DriverStation.getAlliance();
-    if (alliance.isEmpty()) {
-      return false;
-    }
-    if (!DriverStation.isTeleopEnabled()) {
-      return false;
-    }
-
-    double matchTime = DriverStation.getMatchTime();
-    String gameData = DriverStation.getGameSpecificMessage();
-
-    // If there is no game data, assume hub is inactive
-    if (gameData.isEmpty()) {
-      return false;
-    }
-    boolean redInactiveFirst = false;
-    switch (gameData.charAt(0)) {
-      case 'R' -> redInactiveFirst = true;
-      case 'B' -> redInactiveFirst = false;
-      default -> {
-        // Assum hub is inactive if we have invalid game data
-        return false;
-      }
-    }
-
-    // Shift is active for blue if red won auto, or red if blue won auto
-    boolean shift1Active =
-        switch (alliance.get()) {
-          case Red -> !redInactiveFirst;
-          case Blue -> redInactiveFirst;
-        };
-
-    if (matchTime > 130) {
-      // Transition shift, hub is active
-      return true;
-    } else if (matchTime > 105) {
-      // Shift 1
-      return shift1Active;
-    } else if (matchTime > 80) {
-      // Shift 2
-      return !shift1Active;
-    } else if (matchTime > 55) {
-      // Shift 3
-      return shift1Active;
-    } else if (matchTime > 30) {
-      // Shift 4
-      return !shift1Active;
-    } else {
-      return true;
     }
   }
 }
