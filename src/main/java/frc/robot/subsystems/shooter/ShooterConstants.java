@@ -22,4 +22,11 @@ public class ShooterConstants extends SubsystemBase {
 
   /* Speed of kicker when shooting */
   public static final double KICKER_SPEED = 0.4;
+
+  /** Testing Variables */
+  public static final double TEST_POWER = 0.5;
+
+  public static final double TEST_RPM = 500.0;
+
+  public static final double TEST_TIMEOUT = 3.0;
 }

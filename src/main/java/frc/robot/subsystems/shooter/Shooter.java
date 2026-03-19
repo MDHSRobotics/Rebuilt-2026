@@ -16,13 +16,16 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.util.LoggedTunableNumber;
+import frc.robot.util.Testable;
 import java.util.Optional;
 
-public class Shooter extends SubsystemBase {
+public class Shooter extends SubsystemBase implements Testable {
   private final SparkFlex m_shooterLeftMotor =
       new SparkFlex(ShooterConstants.SHOOTER_LEFT_MOTOR_ID, MotorType.kBrushless);
   private final SparkFlex m_shooterRightMotor =
@@ -56,8 +59,24 @@ public class Shooter extends SubsystemBase {
   private final DoublePublisher m_distanceRobotToTagPub =
       m_table.getDoubleTopic("Distance From Robot to AprilTag ").publish();
 
+  private final NetworkTableEntry m_kickerMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeSpinnerMotorRPM_OK");
+  private final NetworkTableEntry m_leftMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeLeftMotorRPM_OK");
+  private final NetworkTableEntry m_rightMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeRightMotorRPM_OK");
+
   private double distanceFromLimelightToAprilTag = 0;
   private double shooter_trim = 0;
+
+  private final LoggedTunableNumber kP =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_P_SHOOTER);
+  private final LoggedTunableNumber kI =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_I_SHOOTER);
+  private final LoggedTunableNumber kD =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_D_SHOOTER);
+
+  SparkFlexConfig shooterLeftMotorConfig;
 
   private double m_leftTargetVelocity = 0;
   private double m_rightTargetVelocity = 0;
@@ -91,10 +110,7 @@ public class Shooter extends SubsystemBase {
         .inverted(true)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .pid(
-            ShooterConstants.K_P_SHOOTER,
-            ShooterConstants.K_I_SHOOTER,
-            ShooterConstants.K_D_SHOOTER);
+        .pid(kP.get(), kI.get(), kD.get());
     m_shooterRightMotor.configure(
         shooterRightMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -191,7 +207,7 @@ public class Shooter extends SubsystemBase {
     if (alliance.isEmpty()) {
       return;
     }
-    boolean hubActive = isHubActive() || test;
+    boolean hubActive = test; // || hubactive()
     if (alliance.get() == Alliance.Blue) {
       if (hubActive) { // && (tagID == 26 || tagID == 25)) {
         setLeftSetpoint(rpm);
@@ -211,57 +227,28 @@ public class Shooter extends SubsystemBase {
     }
   }
 
-  /** This method is used toi determine if the Hub is active */
-  public boolean isHubActive() {
-    Optional<Alliance> alliance = DriverStation.getAlliance();
-    if (alliance.isEmpty()) {
-      return false;
-    }
-    if (!DriverStation.isTeleopEnabled()) {
-      return false;
-    }
+  public Command test() {
+    return Commands.sequence(
+        Commands.run(
+                () -> {
+                  m_kickerMotor.set(ShooterConstants.TEST_POWER);
+                  double rpm = m_kickerMotorEncoder.getVelocity();
+                  m_kickerMotorOk.setBoolean(rpm > ShooterConstants.TEST_RPM);
+                },
+                this)
+            .withTimeout(ShooterConstants.TEST_TIMEOUT),
+        Commands.run(
+                () -> {
+                  m_kickerMotor.set(0.0);
+                  m_kickerMotorOk.setBoolean(Math.abs(m_kickerMotorEncoder.getVelocity()) < 5);
+                },
+                this)
+            .withTimeout(ShooterConstants.TEST_TIMEOUT));
+  }
 
-    double matchTime = DriverStation.getMatchTime();
-    String gameData = DriverStation.getGameSpecificMessage();
-
-    // If there is no game data, assume hub is inactive
-    if (gameData.isEmpty()) {
-      return false;
-    }
-    boolean redInactiveFirst = false;
-    switch (gameData.charAt(0)) {
-      case 'R' -> redInactiveFirst = true;
-      case 'B' -> redInactiveFirst = false;
-      default -> {
-        // Assum hub is inactive if we have invalid game data
-        return false;
-      }
-    }
-
-    // Shift is active for blue if red won auto, or red if blue won auto
-    boolean shift1Active =
-        switch (alliance.get()) {
-          case Red -> !redInactiveFirst;
-          case Blue -> redInactiveFirst;
-        };
-
-    if (matchTime > 130) {
-      // Transition shift, hub is active
-      return true;
-    } else if (matchTime > 105) {
-      // Shift 1
-      return shift1Active;
-    } else if (matchTime > 80) {
-      // Shift 2
-      return !shift1Active;
-    } else if (matchTime > 55) {
-      // Shift 3
-      return shift1Active;
-    } else if (matchTime > 30) {
-      // Shift 4
-      return !shift1Active;
-    } else {
-      return true;
-    }
+  public void resetTestIndicators() {
+    m_kickerMotorOk.setBoolean(false);
+    m_leftMotorOk.setBoolean(false);
+    m_rightMotorOk.setBoolean(false);
   }
 }

@@ -17,4 +17,11 @@ public class HopperConstants extends SubsystemBase {
 
   /** The proportional gain for the Intake */
   public static final double K_P = 0;
+
+  /** Testing Variables */
+  public static final double TEST_POWER = 0.5;
+
+  public static final double TEST_RPM = 500.0;
+
+  public static final double TEST_TIMEOUT = 3.0;
 }

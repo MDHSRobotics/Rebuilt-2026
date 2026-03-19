@@ -13,10 +13,14 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.Testable;
 
-public class Intake extends SubsystemBase {
+public class Intake extends SubsystemBase implements Testable {
   // Motors
   private final SparkFlex m_intakeRightMotor =
       new SparkFlex(IntakeConstants.INTAKE_RIGHT_MOTOR_ID, MotorType.kBrushless);
@@ -53,6 +57,13 @@ public class Intake extends SubsystemBase {
       m_table.getDoubleTopic("Spinner Motor Velocity ").publish();
   private final DoublePublisher m_spinnerTargetSpeedPub =
       m_table.getDoubleTopic("Spinner Target Speed (RPM)").publish();
+
+  private final NetworkTableEntry m_spinnerMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeSpinnerMotorRPM_OK");
+  private final NetworkTableEntry m_leftMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeLeftMotorRPM_OK");
+  private final NetworkTableEntry m_rightMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeRightMotorRPM_OK");
 
   private boolean deployed = false;
 
@@ -152,5 +163,30 @@ public class Intake extends SubsystemBase {
 
   public boolean isDeployed() {
     return deployed;
+  }
+
+  public Command test() {
+    return Commands.sequence(
+        Commands.run(
+                () -> {
+                  m_spinnerMotor.set(IntakeConstants.TEST_POWER);
+                  double rpm = m_spinnerEncoder.getVelocity();
+                  m_spinnerMotorOk.setBoolean(rpm > IntakeConstants.TEST_RPM);
+                },
+                this)
+            .withTimeout(IntakeConstants.TEST_TIMEOUT),
+        Commands.run(
+                () -> {
+                  m_spinnerMotor.set(0.0);
+                  m_spinnerMotorOk.setBoolean(Math.abs(m_spinnerEncoder.getVelocity()) < 5);
+                },
+                this)
+            .withTimeout(IntakeConstants.TEST_TIMEOUT));
+  }
+
+  public void resetTestIndicators() {
+    m_spinnerMotorOk.setBoolean(false);
+    m_leftMotorOk.setBoolean(false);
+    m_rightMotorOk.setBoolean(false);
   }
 }
