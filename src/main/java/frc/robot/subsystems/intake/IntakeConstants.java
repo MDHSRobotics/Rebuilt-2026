@@ -18,7 +18,7 @@ public class IntakeConstants extends SubsystemBase {
   public static final int CURRENT_LIMIT = 80;
 
   /** The proportional gain for the Intake */
-  public static final double K_P = 1;
+  public static final double K_P = 0.5;
 
   /**
    * The position that the left motor intake can pick up the ball in rotations. Left and right is

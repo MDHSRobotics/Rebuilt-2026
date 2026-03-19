@@ -61,6 +61,13 @@ public class Shooter extends SubsystemBase {
 
   private double m_leftTargetVelocity = 0;
   private double m_rightTargetVelocity = 0;
+  SparkFlexConfig shooterLeftMotorConfig;
+  private final LoggedTunableNumber kP =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_P_SHOOTER);
+  private final LoggedTunableNumber kI =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_I_SHOOTER);
+  private final LoggedTunableNumber kD =
+      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_D_SHOOTER);
 
   public Shooter() {
 

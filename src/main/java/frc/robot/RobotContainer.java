@@ -28,6 +28,7 @@ import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.Aiming;
+import frc.robot.util.AutonomousCreator;
 import frc.robot.util.LimelightHelpers;
 
 public class RobotContainer {
@@ -57,6 +58,10 @@ public class RobotContainer {
   private final Intake m_intake = new Intake();
   private final Hopper m_hopper = new Hopper();
 
+  /* Autonomous Creator */
+  private final AutonomousCreator m_autonomousCreator =
+      new AutonomousCreator(this::resetFieldPosition, m_shooter);
+
   private final DriveTelemetry m_logger = new DriveTelemetry(DriveConstants.MAX_LINEAR_SPEED);
 
   /* Controllers  */
@@ -75,6 +80,8 @@ public class RobotContainer {
     configureDriverControllers();
     configureOperatorControllers();
     m_drivetrain.registerTelemetry(m_logger::telemeterize);
+
+    m_autonomousCreator.sendAutoChooser();
   }
 
   private void setDefaultCommands() {
@@ -87,7 +94,7 @@ public class RobotContainer {
                 m_drive
                     .withVelocityX(getVelocityX())
                     .withVelocityY(getVelocityY())
-                    .withRotationalRate(getRotationalRate() * 0.5)
+                    .withRotationalRate(getRotationalRate())
                     .withRotationalDeadband(getRotationalDeadband())));
 
     // Idle while the robot is disabled. This ensures the configured
@@ -108,7 +115,7 @@ public class RobotContainer {
 
     // Subsystem Defaults
     m_shooter.setDefaultCommand(new RunCommand(() -> m_shooter.stopMotors(), m_shooter));
-    m_intake.setDefaultCommand(new RunCommand(() -> m_intake.stopSpinnerMotors(), m_intake));
+    m_intake.setDefaultCommand(new RunCommand(() -> m_intake.stopMotors(), m_intake));
     m_hopper.setDefaultCommand(new RunCommand(() -> m_hopper.stopMotors(), m_hopper));
   }
 
@@ -181,14 +188,17 @@ public class RobotContainer {
     //         new RunCommand(() -> m_intake.deployedPosition(), m_intake)
     //             .andThen(() -> m_intake.stowedPosition()));
 
-    m_operatorController
-        .leftBumper()
-        .and(() -> (m_intake.isDeployed()))
-        .onTrue(Commands.runOnce(() -> m_intake.stowedPosition(), m_intake));
-    m_operatorController
-        .leftBumper()
-        .and(() -> (!m_intake.isDeployed()))
-        .onTrue(Commands.runOnce(() -> m_intake.deployedPosition(), m_intake));
+    // m_operatorController
+    //     .leftBumper()
+    //     .and(() -> (m_intake.isDeployed()))
+    //     .onTrue(Commands.runOnce(() -> m_intake.stowedPosition(), m_intake));
+    // m_operatorController
+    //     .leftBumper()
+    //     .and(() -> (!m_intake.isDeployed()))
+    //     .onTrue(Commands.runOnce(() -> m_intake.deployedPosition(), m_intake));
+
+    m_operatorController.leftBumper().onTrue(Commands.run(() -> m_intake.runMotors(0.8), m_intake));
+    m_operatorController.b().onTrue(Commands.run(() -> m_intake.runMotors(0.8), m_intake));
 
     // Spin Intake
     m_operatorController

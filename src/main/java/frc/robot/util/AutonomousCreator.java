@@ -39,10 +39,10 @@ public class AutonomousCreator {
     SmartDashboard.putData("Starting Position", m_startingPositionChooser);
 
     // Options for first action
-    m_actionOneChooser.addOption("Action 1 :", "Shoot ball");
+    m_actionOneChooser.addOption("Action 1", "Shoot ball");
 
     // Create Auto
-    SmartDashboard.putData("Create Auto", m_createAuto);
+    SmartDashboard.putData("Choose Action and Create Auto", m_actionOneChooser);
   }
 
   private void createOneShootingSequenceAuto() {

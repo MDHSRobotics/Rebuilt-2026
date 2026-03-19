@@ -42,17 +42,17 @@ public class Intake extends SubsystemBase {
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
   private final NetworkTable m_table = m_inst.getTable("Intake");
   private final DoublePublisher m_leftCurrentPositionPub =
-      m_inst.getDoubleTopic("Left Intake Current Position ").publish();
+      m_table.getDoubleTopic("Left Intake Current Position ").publish();
   private final DoublePublisher m_rightCurrentPositionPub =
-      m_inst.getDoubleTopic("Right Intake Current Position ").publish();
+      m_table.getDoubleTopic("Right Intake Current Position ").publish();
   private final DoublePublisher m_leftTargetPositionPub =
-      m_inst.getDoubleTopic("Left Target Position (Rotations)").publish();
+      m_table.getDoubleTopic("Left Target Position (Rotations)").publish();
   private final DoublePublisher m_rightTargetPositionPub =
-      m_inst.getDoubleTopic("Right Target Position (Rotations)").publish();
+      m_table.getDoubleTopic("Right Target Position (Rotations)").publish();
   private final DoublePublisher m_spinnerCurrentVelocityPub =
-      m_inst.getDoubleTopic("Spinner Motor Velocity ").publish();
+      m_table.getDoubleTopic("Spinner Motor Velocity ").publish();
   private final DoublePublisher m_spinnerTargetSpeedPub =
-      m_inst.getDoubleTopic("Spinner Target Speed (RPM)").publish();
+      m_table.getDoubleTopic("Spinner Target Speed (RPM)").publish();
 
   private boolean deployed = false;
 
@@ -113,6 +113,11 @@ public class Intake extends SubsystemBase {
     m_intakeRightMotor.set(leftIntakeMotorPower);
     m_intakeLeftMotor.set(rightIntakeMotorPower);
     m_spinnerMotor.set(rightIntakeMotorPower);
+  }
+
+  public void runMotors(double leftIntakeMotorPower) {
+    m_intakeLeftMotor.set(leftIntakeMotorPower);
+    m_intakeRightMotor.set(leftIntakeMotorPower);
   }
 
   public void runSpinner(double power) {
