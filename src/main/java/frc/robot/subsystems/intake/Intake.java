@@ -13,10 +13,14 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.util.Testable;
 
-public class Intake extends SubsystemBase {
+public class Intake extends SubsystemBase implements Testable {
   // Motors
   private final SparkFlex m_intakeRightMotor =
       new SparkFlex(IntakeConstants.INTAKE_RIGHT_MOTOR_ID, MotorType.kBrushless);
@@ -42,17 +46,24 @@ public class Intake extends SubsystemBase {
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
   private final NetworkTable m_table = m_inst.getTable("Intake");
   private final DoublePublisher m_leftCurrentPositionPub =
-      m_inst.getDoubleTopic("Left Intake Current Position ").publish();
+      m_table.getDoubleTopic("Left Intake Current Position ").publish();
   private final DoublePublisher m_rightCurrentPositionPub =
-      m_inst.getDoubleTopic("Right Intake Current Position ").publish();
+      m_table.getDoubleTopic("Right Intake Current Position ").publish();
   private final DoublePublisher m_leftTargetPositionPub =
-      m_inst.getDoubleTopic("Left Target Position (Rotations)").publish();
+      m_table.getDoubleTopic("Left Target Position (Rotations)").publish();
   private final DoublePublisher m_rightTargetPositionPub =
-      m_inst.getDoubleTopic("Right Target Position (Rotations)").publish();
+      m_table.getDoubleTopic("Right Target Position (Rotations)").publish();
   private final DoublePublisher m_spinnerCurrentVelocityPub =
-      m_inst.getDoubleTopic("Spinner Motor Velocity ").publish();
+      m_table.getDoubleTopic("Spinner Motor Velocity ").publish();
   private final DoublePublisher m_spinnerTargetSpeedPub =
-      m_inst.getDoubleTopic("Spinner Target Speed (RPM)").publish();
+      m_table.getDoubleTopic("Spinner Target Speed (RPM)").publish();
+
+  private final NetworkTableEntry m_spinnerMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeSpinnerMotorRPM_OK");
+  private final NetworkTableEntry m_leftMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeLeftMotorRPM_OK");
+  private final NetworkTableEntry m_rightMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeRightMotorRPM_OK");
 
   private boolean deployed = false;
 
@@ -147,5 +158,30 @@ public class Intake extends SubsystemBase {
 
   public boolean isDeployed() {
     return deployed;
+  }
+
+  public Command test() {
+    return Commands.sequence(
+        Commands.run(
+                () -> {
+                  m_spinnerMotor.set(IntakeConstants.TEST_POWER);
+                  double rpm = m_spinnerEncoder.getVelocity();
+                  m_spinnerMotorOk.setBoolean(rpm > IntakeConstants.TEST_RPM);
+                },
+                this)
+            .withTimeout(IntakeConstants.TEST_TIMEOUT),
+        Commands.run(
+                () -> {
+                  m_spinnerMotor.set(0.0);
+                  m_spinnerMotorOk.setBoolean(Math.abs(m_spinnerEncoder.getVelocity()) < 5);
+                },
+                this)
+            .withTimeout(IntakeConstants.TEST_TIMEOUT));
+  }
+
+  public void resetTestIndicators() {
+    m_spinnerMotorOk.setBoolean(false);
+    m_leftMotorOk.setBoolean(false);
+    m_rightMotorOk.setBoolean(false);
   }
 }

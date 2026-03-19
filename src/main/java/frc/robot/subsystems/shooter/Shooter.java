@@ -16,13 +16,16 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.util.LoggedTunableNumber;
+import frc.robot.util.Testable;
 import java.util.Optional;
 
-public class Shooter extends SubsystemBase {
+public class Shooter extends SubsystemBase implements Testable {
   private final SparkFlex m_shooterLeftMotor =
       new SparkFlex(ShooterConstants.SHOOTER_LEFT_MOTOR_ID, MotorType.kBrushless);
   private final SparkFlex m_shooterRightMotor =
@@ -55,6 +58,13 @@ public class Shooter extends SubsystemBase {
       m_table.getDoubleTopic("Kicker Motor Current Velocity ").publish();
   private final DoublePublisher m_distanceRobotToTagPub =
       m_table.getDoubleTopic("Distance From Robot to AprilTag ").publish();
+
+  private final NetworkTableEntry m_kickerMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeSpinnerMotorRPM_OK");
+  private final NetworkTableEntry m_leftMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeLeftMotorRPM_OK");
+  private final NetworkTableEntry m_rightMotorOk =
+      m_inst.getTable("Test").getEntry("IntakeRightMotorRPM_OK");
 
   private double distanceFromLimelightToAprilTag = 0;
   private double shooter_trim = 0;
@@ -93,8 +103,7 @@ public class Shooter extends SubsystemBase {
         .inverted(true)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        .pid(
-            kP.get(), kI.get(), kD.get());
+        .pid(kP.get(), kI.get(), kD.get());
     m_shooterRightMotor.configure(
         shooterRightMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
 
@@ -140,7 +149,7 @@ public class Shooter extends SubsystemBase {
     m_kickerMotor.set(kickerPower);
   }
 
-   public void runLeftMotorTest(double setpoint) {
+  public void runLeftMotorTest(double setpoint) {
     setLeftSetpoint(setpoint);
   }
 
@@ -191,7 +200,7 @@ public class Shooter extends SubsystemBase {
     if (alliance.isEmpty()) {
       return;
     }
-    boolean hubActive = test; //|| hubactive()
+    boolean hubActive = test; // || hubactive()
     if (alliance.get() == Alliance.Blue) {
       if (hubActive) { // && (tagID == 26 || tagID == 25)) {
         setLeftSetpoint(rpm);
@@ -209,5 +218,30 @@ public class Shooter extends SubsystemBase {
         m_kickerMotor.stopMotor();
       }
     }
+  }
+
+  public Command test() {
+    return Commands.sequence(
+        Commands.run(
+                () -> {
+                  m_kickerMotor.set(ShooterConstants.TEST_POWER);
+                  double rpm = m_kickerMotorEncoder.getVelocity();
+                  m_kickerMotorOk.setBoolean(rpm > ShooterConstants.TEST_RPM);
+                },
+                this)
+            .withTimeout(ShooterConstants.TEST_TIMEOUT),
+        Commands.run(
+                () -> {
+                  m_kickerMotor.set(0.0);
+                  m_kickerMotorOk.setBoolean(Math.abs(m_kickerMotorEncoder.getVelocity()) < 5);
+                },
+                this)
+            .withTimeout(ShooterConstants.TEST_TIMEOUT));
+  }
+
+  public void resetTestIndicators() {
+    m_kickerMotorOk.setBoolean(false);
+    m_leftMotorOk.setBoolean(false);
+    m_rightMotorOk.setBoolean(false);
   }
 }

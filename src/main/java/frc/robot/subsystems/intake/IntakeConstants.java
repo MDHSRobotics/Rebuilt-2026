@@ -46,4 +46,11 @@ public class IntakeConstants extends SubsystemBase {
 
   /** The intake speed of the spinners in RPM */
   public static final double INTAKE_SPINNERS_SPEED = 0;
+
+  /** Testing Variables */
+  public static final double TEST_POWER = 0.5;
+
+  public static final double TEST_RPM = 500.0;
+
+  public static final double TEST_TIMEOUT = 3.0;
 }

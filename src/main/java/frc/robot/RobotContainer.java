@@ -14,6 +14,8 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
@@ -29,6 +31,9 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.Aiming;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.Testable;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RobotContainer {
   // Robot Speed from 0% to 100%
@@ -69,6 +74,8 @@ public class RobotContainer {
 
   private final AimingCommand m_aimingCommands =
       new AimingCommand(m_drivetrain, this::getVelocityX, this::getVelocityY, this::getDeadband);
+
+  private final List<Testable> testableSubsystems = List.of(m_intake, m_hopper, m_shooter);
 
   public RobotContainer() {
     setDefaultCommands();
@@ -286,5 +293,25 @@ public class RobotContainer {
 
   public void changeTestRpm(double val) {
     m_testShooterRPM += val;
+  }
+
+  public Command buildFullTestSequence() {
+    List<Command> steps = new ArrayList<>();
+
+    // Reset all indicators first
+    steps.add(
+        Commands.runOnce(
+            () -> {
+              for (Testable t : testableSubsystems) {
+                t.resetTestIndicators();
+              }
+            }));
+
+    for (Testable t : testableSubsystems) {
+      steps.add(t.test());
+      steps.add(new WaitCommand(1.0));
+    }
+
+    return new SequentialCommandGroup(steps.toArray(new Command[0]));
   }
 }
