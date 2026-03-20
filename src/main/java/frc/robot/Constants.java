@@ -17,7 +17,7 @@ public final class Constants {
   /** The update period of the robot in seconds. */
   public static final double UPDATE_PERIOD = 0.02;
 
-  public static final boolean TUNING_MODE = false;
+  public static final boolean TUNING_MODE = true;
 
   public static class ControllerConstants {
     private ControllerConstants() {}
@@ -31,14 +31,14 @@ public final class Constants {
 
     public static final String FRONT_LIMELIGHT_NAME = "limelight";
 
-    /** Distance from the center of the robot to the front limelight lens in meters */
-    public static final double FRONT_LIMELIGHT_FORWARD_DISTANCE = Inches.of(22.416).in(Meters);
+    /** Distance from the center of the robot to the front limelight lens in Inches */
+    public static final double FRONT_LIMELIGHT_FORWARD_DISTANCE = 22.416;
 
-    /** Distance from the floor to the front limelight lens in meters */
-    public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(22.014).in(Meters);
+    /** Distance from the floor to the front limelight lens in Inches */
+    public static final double FRONT_LIMELIGHT_UP_DISTANCE = 23.75;
 
     /*Units: degrees */
-    public static final double LIMELIGHT_MOUNT_ANGLE = 60;
+    public static final double LIMELIGHT_MOUNT_ANGLE = 30;
 
     /** Units: Degrees */
     public static final double FRONT_LIMELIGHT_PITCH = 60;

@@ -1,7 +1,10 @@
 package frc.robot.util;
 
-import edu.wpi.first.math.controller.PIDController;
 import static java.lang.Math.*;
+
+import edu.wpi.first.math.controller.PIDController;
+import frc.robot.Constants.FieldConstants;
+import frc.robot.Constants.VisionConstants;
 
 public class Aiming {
   private static PIDController yawPID = new PIDController(0.15, 0, 0);
@@ -26,5 +29,22 @@ public class Aiming {
   public static double getYawTxAdjustment(double tx) {
     double value = yawPID.calculate(tx, 0);
     return value;
+  }
+
+  /**
+   * @param slope The Slope value taken from ShooterConstants file
+   * @param intercept The shooter's base RPM
+   * @param ty The limelight's ty value when looking at a tag
+   * @return The target RPM calculate based on the distance of the robot to the hub
+   */
+  public static double calculateShooterRPM(double slope, double intercept, double ty) {
+    double distance =
+        calculateTagDistance(
+            VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
+            FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG,
+            VisionConstants.LIMELIGHT_MOUNT_ANGLE,
+            ty);
+    double targetRPM = slope * distance + intercept;
+    return targetRPM;
   }
 }

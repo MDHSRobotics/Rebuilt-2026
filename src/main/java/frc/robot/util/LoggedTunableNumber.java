@@ -33,7 +33,7 @@ public class LoggedTunableNumber {
     this.m_defaultValue = defaultValue;
     m_lastValue = defaultValue;
     if (Constants.TUNING_MODE) {
-      SmartDashboard.putNumber(m_key, defaultValue);
+      SmartDashboard.setDefaultNumber(m_key, defaultValue);
     }
   }
 

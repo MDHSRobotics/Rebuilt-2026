@@ -21,11 +21,13 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.util.Aiming;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.Testable;
 import java.util.Optional;
 
 public class Shooter extends SubsystemBase implements Testable {
+  /* Spark Flex Motors */
   private final SparkFlex m_shooterLeftMotor =
       new SparkFlex(ShooterConstants.SHOOTER_LEFT_MOTOR_ID, MotorType.kBrushless);
   private final SparkFlex m_shooterRightMotor =
@@ -33,10 +35,12 @@ public class Shooter extends SubsystemBase implements Testable {
   private final SparkFlex m_kickerMotor =
       new SparkFlex(ShooterConstants.KICKER_MOTOR_ID, MotorType.kBrushless);
 
+  /* Motor Encoders */
   private final RelativeEncoder m_leftShooterMotorEncoder = m_shooterLeftMotor.getEncoder();
   private final RelativeEncoder m_rightShooterMotorEncoder = m_shooterRightMotor.getEncoder();
   private final RelativeEncoder m_kickerMotorEncoder = m_kickerMotor.getEncoder();
 
+  /* Shooter Motors Controllers */
   private final SparkClosedLoopController m_leftShooterMotorController =
       m_shooterLeftMotor.getClosedLoopController();
   private final SparkClosedLoopController m_rightShooterMotorController =
@@ -46,6 +50,7 @@ public class Shooter extends SubsystemBase implements Testable {
   private final NetworkTable m_table = m_inst.getTable("Shooter");
   private final NetworkTable m_limelight = m_inst.getTable("limelight");
 
+  /* Networktables Publishers */
   private final DoublePublisher m_leftCurrentVelocityPub =
       m_table.getDoubleTopic("Left Shooter Current Velocity ").publish();
   private final DoublePublisher m_rightCurrentVelocityPub =
@@ -72,21 +77,13 @@ public class Shooter extends SubsystemBase implements Testable {
   private final LoggedTunableNumber kP =
       new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_P_SHOOTER);
   private final LoggedTunableNumber kI =
-      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_I_SHOOTER);
+      new LoggedTunableNumber("Shooter/kI", ShooterConstants.K_I_SHOOTER);
   private final LoggedTunableNumber kD =
-      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_D_SHOOTER);
-
-  SparkFlexConfig shooterLeftMotorConfig;
+      new LoggedTunableNumber("Shooter/kD", ShooterConstants.K_D_SHOOTER);
 
   private double m_leftTargetVelocity = 0;
   private double m_rightTargetVelocity = 0;
   SparkFlexConfig shooterLeftMotorConfig;
-  private final LoggedTunableNumber kP =
-      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_P_SHOOTER);
-  private final LoggedTunableNumber kI =
-      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_I_SHOOTER);
-  private final LoggedTunableNumber kD =
-      new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_D_SHOOTER);
 
   public Shooter() {
 
@@ -180,6 +177,11 @@ public class Shooter extends SubsystemBase implements Testable {
     m_kickerMotor.set(ShooterConstants.KICKER_SPEED);
   }
 
+  public void shootBall() {
+    rampUpShooter();
+    m_kickerMotor.set(ShooterConstants.KICKER_SPEED);
+  }
+
   public void changeTrim(double amount) {
     shooter_trim += amount;
   }
@@ -225,6 +227,15 @@ public class Shooter extends SubsystemBase implements Testable {
         m_kickerMotor.stopMotor();
       }
     }
+  }
+
+  public void rampUpShooter() {
+    double targetRPM =
+        Aiming.calculateShooterRPM(
+            ShooterConstants.SLOPE,
+            ShooterConstants.INTERCEPT,
+            m_limelight.getEntry("ty").getDouble(0));
+    setLeftSetpoint(targetRPM);
   }
 
   public Command test() {

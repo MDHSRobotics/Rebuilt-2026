@@ -43,13 +43,17 @@ public class Hopper extends SubsystemBase implements Testable {
         m_hopperConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
   }
 
-  public void runHopper(double speed) {
-    m_hopperMotor.set(speed);
-    m_hopperSpeedPub.set(m_hopperEncoder.getVelocity());
+  public void runHopper(HopperConstants.HopperPowers powerEnum) {
+    m_hopperMotor.set(powerEnum.power);
   }
 
   public void stopMotors() {
     m_hopperMotor.stopMotor();
+  }
+
+  @Override
+  public void periodic() {
+    m_hopperSpeedPub.set(m_hopperEncoder.getVelocity());
   }
 
   public Command test() {

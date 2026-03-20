@@ -24,4 +24,18 @@ public class HopperConstants extends SubsystemBase {
   public static final double TEST_RPM = 500.0;
 
   public static final double TEST_TIMEOUT = 3.0;
+
+  public static final double SHOOT_POWER = .5;
+
+  public enum HopperPowers {
+    SHOOT(0.8),
+    INTAKE(0.4),
+    INTAKE_REVERSE(-0.8);
+
+    public final double power;
+
+    HopperPowers(double power) {
+      this.power = power;
+    }
+  }
 }

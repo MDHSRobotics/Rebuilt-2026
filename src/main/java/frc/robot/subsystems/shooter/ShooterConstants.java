@@ -15,10 +15,10 @@ public class ShooterConstants extends SubsystemBase {
    */
   public static final int CURRENT_LIMIT = 80;
 
-  /* Shooter Motors P and D Constants */
-  public static final double K_P_SHOOTER = 0.0015;
+  /* Shooter Motors PID Constants */
+  public static final double K_P_SHOOTER = 0.004;
   public static final double K_I_SHOOTER = 0.0000;
-  public static final double K_D_SHOOTER = 0.0005;
+  public static final double K_D_SHOOTER = 0.00005;
 
   /* Speed of kicker when shooting */
   public static final double KICKER_SPEED = 0.4;
@@ -29,4 +29,9 @@ public class ShooterConstants extends SubsystemBase {
   public static final double TEST_RPM = 500.0;
 
   public static final double TEST_TIMEOUT = 3.0;
+
+  /* Constants for calculating rpm */
+  public static final double SLOPE = 36 / 7;
+  // This is the rpm of the closest distance that the shooter can shoot the ball into the hub
+  public static final double INTERCEPT = 2156;
 }

@@ -7,6 +7,7 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -27,6 +28,7 @@ import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveTelemetry;
 import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.subsystems.hopper.Hopper;
+import frc.robot.subsystems.hopper.HopperConstants.HopperPowers;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.Aiming;
@@ -149,6 +151,15 @@ public class RobotContainer {
 
     // Reset the field-centric heading on left bumper press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
+
+    m_driverController
+        .R1()
+        .whileTrue(
+            new SequentialCommandGroup(
+                Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2),
+                new ParallelCommandGroup(
+                    Commands.run(() -> m_shooter.shootBall(), m_shooter),
+                    Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
   }
 
   /**
@@ -171,20 +182,6 @@ public class RobotContainer {
     //    .toggleOnTrue(Commands.run(() -> m_shooter.runLeftMotor(.9, 0), m_shooter));
 
     // **Shooter Commands**
-
-    // Ramp Up Shooter
-    m_operatorController
-        .rightBumper()
-        .toggleOnTrue(
-            Commands.run(() -> m_shooter.rampUpShooter(m_testShooterRPM, true), m_shooter));
-
-    // Shoot Ball
-    m_operatorController
-        .rightTrigger()
-        .whileTrue(
-            new ParallelCommandGroup(
-                Commands.run(() -> m_shooter.shootBall(m_testShooterRPM), m_shooter),
-                Commands.run(() -> m_hopper.runHopper(0.8), m_hopper)));
 
     // **Intake Commands**
 
@@ -210,10 +207,10 @@ public class RobotContainer {
     // Spin Intake
     m_operatorController
         .leftTrigger()
-        .toggleOnTrue(
+        .whileTrue(
             new ParallelCommandGroup(
                 Commands.run(() -> m_intake.runSpinner(0.7), m_intake),
-                Commands.run(() -> m_hopper.runHopper(0.2))));
+                Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE))));
 
     // Spin Intake Reverse
     m_operatorController
@@ -221,7 +218,7 @@ public class RobotContainer {
         .toggleOnTrue(
             new ParallelCommandGroup(
                 Commands.run(() -> m_intake.runSpinner(-0.9), m_intake),
-                Commands.run(() -> m_hopper.runHopper(-0.8))));
+                Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE))));
 
     // Lock on to the Hub
     m_operatorController
@@ -248,17 +245,24 @@ public class RobotContainer {
 
   public Command getAutonomousCommand() {
     // Simple drive forward auton
-    final var idle = new SwerveRequest.Idle();
-    return Commands.sequence(
-        // Reset our field centric heading to match the robot
-        // facing away from our alliance station wall (0 deg).
-        m_drivetrain.runOnce(() -> m_drivetrain.seedFieldCentric(Rotation2d.kZero)),
-        // Then slowly drive forward (away from us) for 5 seconds.
-        m_drivetrain
-            .applyRequest(() -> m_drive.withVelocityX(0.5).withVelocityY(0).withRotationalRate(0))
-            .withTimeout(5.0),
-        // Finally idle for the rest of auton
-        m_drivetrain.applyRequest(() -> idle));
+    // final var idle = new SwerveRequest.Idle();
+    // return Commands.sequence(
+    //     // Reset our field centric heading to match the robot
+    //     // facing away from our alliance station wall (0 deg).
+    //     m_drivetrain.runOnce(() -> m_drivetrain.seedFieldCentric(Rotation2d.kZero)),
+    //     // Then slowly drive forward (away from us) for 5 seconds.
+    //     m_drivetrain
+    //         .applyRequest(() ->
+    // m_drive.withVelocityX(0.5).withVelocityY(0).withRotationalRate(0))
+    //         .withTimeout(5.0),
+    //     // Finally idle for the rest of auton
+    //     m_drivetrain.applyRequest(() -> idle));
+
+    Command auto_command = m_autonomousCreator.getAutonomousCommand();
+    if (auto_command != null && auto_command instanceof SequentialCommandGroup) {
+      return auto_command;
+    }
+    return new PathPlannerAuto("Drive Straight");
   }
 
   /**
@@ -278,7 +282,7 @@ public class RobotContainer {
    * @return The rotational deadband in radians per second.
    */
   public double getRotationalDeadband() {
-    return DriveConstants.MAX_ANGULAR_VELOCITY * 0.1 * m_robotSpeed;
+    return DriveConstants.MAX_ANGULAR_VELOCITY * 0.15 * m_robotSpeed;
   }
 
   public double getVelocityX() {
