@@ -102,6 +102,8 @@ public class Robot extends TimedRobot {
         m_hasAppliedRobotRotation = true;
       }
     }
+
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 1);
   }
 
   @Override
@@ -116,7 +118,7 @@ public class Robot extends TimedRobot {
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
 
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 2);
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
     // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
     // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
@@ -136,7 +138,7 @@ public class Robot extends TimedRobot {
       CommandScheduler.getInstance().cancel(m_autonomousCommand);
     }
 
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 2);
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
     // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
     // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
@@ -152,12 +154,12 @@ public class Robot extends TimedRobot {
   @Override
   public void testInit() {
     CommandScheduler.getInstance().cancelAll();
-    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 2);
+    LimelightHelpers.SetIMUMode(VisionConstants.FRONT_LIMELIGHT_NAME, 4);
     // LimelightHelpers.SetIMUMode(VisionConstants.BACK_LIMELIGHT_NAME, 4);
     LimelightHelpers.SetThrottle(VisionConstants.FRONT_LIMELIGHT_NAME, 0);
     // LimelightHelpers.SetThrottle(VisionConstants.BACK_LIMELIGHT_NAME, 0);
     m_robotContainer.resetFieldPosition(
-        new Pose2d(Meters.of(10), Meters.of(5), Rotation2d.fromDegrees(180)));
+        new Pose2d(Meters.of(0), Meters.of(0), Rotation2d.fromDegrees(180)));
   }
 
   @Override

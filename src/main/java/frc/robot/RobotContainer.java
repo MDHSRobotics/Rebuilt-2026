@@ -201,20 +201,32 @@ public class RobotContainer {
     //     .and(() -> (!m_intake.isDeployed()))
     //     .onTrue(Commands.runOnce(() -> m_intake.deployedPosition(), m_intake));
 
-    m_operatorController.leftBumper().onTrue(Commands.run(() -> m_intake.runMotors(0.8), m_intake));
-    m_operatorController.b().onTrue(Commands.run(() -> m_intake.runMotors(0.8), m_intake));
+    // m_operatorController.leftBumper().onTrue(Commands.run(() -> m_intake.runMotors(0.8),
+    // m_intake));
+    // m_operatorController.b().onTrue(Commands.run(() -> m_intake.runMotors(0.8), m_intake));
 
+    m_operatorController
+        .x()
+        .toggleOnTrue(
+            new RunCommand(() -> m_shooter.rampUpShooter(m_testShooterRPM, true), m_shooter));
+
+    m_operatorController
+        .y()
+        .whileTrue(
+            new ParallelCommandGroup(
+                Commands.run(() -> m_shooter.shootBall(m_testShooterRPM), m_shooter),
+                Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper)));
     // Spin Intake
     m_operatorController
         .leftTrigger()
-        .whileTrue(
+        .toggleOnTrue(
             new ParallelCommandGroup(
                 Commands.run(() -> m_intake.runSpinner(0.7), m_intake),
                 Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE))));
 
     // Spin Intake Reverse
     m_operatorController
-        .x()
+        .leftBumper()
         .toggleOnTrue(
             new ParallelCommandGroup(
                 Commands.run(() -> m_intake.runSpinner(-0.9), m_intake),
@@ -238,9 +250,9 @@ public class RobotContainer {
                             .withRotationalDeadband(getRotationalDeadband()))));
 
     // Change Shooter Trim
-    m_operatorController.povLeft().onTrue(new InstantCommand(() -> changeTestRpm(-100)));
+    m_operatorController.povLeft().onTrue(new InstantCommand(() -> changeTestRpm(-50)));
 
-    m_operatorController.povRight().onTrue(new InstantCommand(() -> changeTestRpm(100)));
+    m_operatorController.povRight().onTrue(new InstantCommand(() -> changeTestRpm(50)));
   }
 
   public Command getAutonomousCommand() {

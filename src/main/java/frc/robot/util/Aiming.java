@@ -3,8 +3,6 @@ package frc.robot.util;
 import static java.lang.Math.*;
 
 import edu.wpi.first.math.controller.PIDController;
-import frc.robot.Constants.FieldConstants;
-import frc.robot.Constants.VisionConstants;
 
 public class Aiming {
   private static PIDController yawPID = new PIDController(0.15, 0, 0);
@@ -40,13 +38,8 @@ public class Aiming {
    * @param tid The tag the apriltag is looking at
    * @return The target RPM calculate based on the distance of the robot to the hub
    */
-  public static double calculateShooterRPM(double slope, double intercept, double ty, double tid) {
-    double distance =
-        calculateTagDistance(
-            VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
-            FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG,
-            VisionConstants.LIMELIGHT_MOUNT_ANGLE,
-            ty);
+  public static double calculateShooterRPM(
+      double slope, double intercept, double distance, double tid) {
     double targetRPM = slope * distance + intercept;
     return targetRPM;
   }
@@ -60,13 +53,7 @@ public class Aiming {
    * @return The target RPM calculate based on the distance of the robot to the hub
    */
   public static double calculateShooterRPM(
-      PolynomialInterpolation polynomial, double ty, double tid) {
-    double distance =
-        calculateTagDistance(
-            VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
-            FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG,
-            VisionConstants.LIMELIGHT_MOUNT_ANGLE,
-            ty);
+      PolynomialInterpolation polynomial, double distance, double tid) {
     double targetRPM = polynomial.evaluate(distance);
     return targetRPM;
   }

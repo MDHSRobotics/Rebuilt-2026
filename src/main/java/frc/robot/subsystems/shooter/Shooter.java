@@ -73,6 +73,7 @@ public class Shooter extends SubsystemBase implements Testable {
       m_inst.getTable("Test").getEntry("IntakeRightMotorRPM_OK");
 
   private NetworkTableEntry ty = m_limelight.getEntry("ty");
+  private NetworkTableEntry tid = m_limelight.getEntry("tid");
 
   private double distanceFromLimelightToAprilTag = 0;
   private double shooter_trim = 0;
@@ -86,6 +87,8 @@ public class Shooter extends SubsystemBase implements Testable {
 
   private double m_leftTargetVelocity = 0;
   private double m_rightTargetVelocity = 0;
+  private double m_currentDistance = 0;
+  private double m_lastDistance = 0;
   SparkFlexConfig shooterLeftMotorConfig;
 
   private PolynomialInterpolation polynomial =
@@ -98,7 +101,7 @@ public class Shooter extends SubsystemBase implements Testable {
     shooterLeftMotorConfig
         .smartCurrentLimit(ShooterConstants.CURRENT_LIMIT)
         .idleMode(IdleMode.kCoast)
-        .inverted(true)
+        .inverted(false)
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
         .pid(kP.get(), kI.get(), kD.get());
@@ -136,20 +139,23 @@ public class Shooter extends SubsystemBase implements Testable {
     m_rightCurrentVelocityPub.set(m_rightShooterMotorEncoder.getVelocity());
     m_kickerCurrentVelocityPub.set(m_kickerMotorEncoder.getVelocity());
 
-    double targetOffsetAngle_Vertical = ty.getDouble(0.0);
-
-    double angleToGoalDegrees = VisionConstants.LIMELIGHT_MOUNT_ANGLE + targetOffsetAngle_Vertical;
-    double angleToGoalRadians = Math.toRadians(angleToGoalDegrees);
-
-    // calculate distance
-    distanceFromLimelightToAprilTag =
-        (FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG
-                - VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE)
-            / Math.tan(angleToGoalRadians);
-    m_distanceRobotToTagPub.set(distanceFromLimelightToAprilTag);
-
     if (kP.hasChanged() || kI.hasChanged() || kD.hasChanged()) {
       shooterLeftMotorConfig.closedLoop.pid(kP.get(), kI.get(), kD.get());
+      m_shooterLeftMotor.configure(
+          shooterLeftMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+    }
+
+    m_currentDistance =
+        Aiming.calculateTagDistance(
+            VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE_INCHES,
+            FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG,
+            VisionConstants.LIMELIGHT_MOUNT_ANGLE,
+            ty.getDouble(0));
+    m_distanceRobotToTagPub.set(m_currentDistance);
+    if (tid.getDouble(0) > 0) {
+      m_lastDistance = m_currentDistance;
+    } else {
+      m_currentDistance = m_lastDistance;
     }
   }
 
@@ -237,7 +243,10 @@ public class Shooter extends SubsystemBase implements Testable {
   public void rampUpShooter() {
     double targetRPM =
         Aiming.calculateShooterRPM(
-            ShooterConstants.SLOPE, ShooterConstants.INTERCEPT, ty.getDouble(0));
+            ShooterConstants.SLOPE,
+            ShooterConstants.INTERCEPT,
+            m_currentDistance,
+            tid.getDouble(0));
     setLeftSetpoint(targetRPM);
   }
 
