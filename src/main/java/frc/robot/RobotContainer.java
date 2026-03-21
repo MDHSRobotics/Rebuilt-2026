@@ -106,6 +106,9 @@ public class RobotContainer {
                     .withRotationalRate(getRotationalRate())
                     .withRotationalDeadband(getRotationalDeadband())));
 
+    //    m_shooter.getYawRotationalRate() * DriveConstants.MAX_ANGULAR_VELOCITY)));
+    
+
     // Idle while the robot is disabled. This ensures the configured
     // neutral mode is applied to the drive motors while disabled.
     final var idle = new SwerveRequest.Idle();
@@ -151,15 +154,32 @@ public class RobotContainer {
 
     // Reset the field-centric heading on left bumper press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
-
+    m_driverController
+        .square()
+        .whileTrue(new RunCommand(() -> System.out.println(DriveConstants.MAX_ANGULAR_VELOCITY)));
+    // Shoot Ball
     m_driverController
         .R1()
         .whileTrue(
             new SequentialCommandGroup(
                 Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2),
-                new ParallelCommandGroup(
-                    Commands.run(() -> m_shooter.shootBall(), m_shooter),
-                    Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
+                new ParallelCommandGroup(Commands.run(() -> m_shooter.shootBall(), m_shooter))));
+    // Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
+
+    // Align with hub
+    m_driverController
+        .triangle()
+        .toggleOnTrue(
+            m_drivetrain
+                .applyRequest(
+                    () ->
+                        m_drive
+                            .withVelocityX(getVelocityX())
+                            .withVelocityY(getVelocityY())
+                            .withRotationalRate(
+                                m_shooter.getYawRotationalRate()
+                                    * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
+                .until(() -> Math.abs(m_driverController.getRightX()) > 0.1));
   }
 
   /**
@@ -294,7 +314,7 @@ public class RobotContainer {
    * @return The rotational deadband in radians per second.
    */
   public double getRotationalDeadband() {
-    return DriveConstants.MAX_ANGULAR_VELOCITY * 0.15 * m_robotSpeed;
+    return DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY * 0.15 * m_robotSpeed;
   }
 
   public double getVelocityX() {
@@ -306,7 +326,9 @@ public class RobotContainer {
   }
 
   public double getRotationalRate() {
-    return -m_driverController.getRightX() * DriveConstants.MAX_ANGULAR_VELOCITY * m_robotSpeed;
+    return -m_driverController.getRightX()
+        * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY
+        * m_robotSpeed;
   }
 
   public void resetFieldPosition(Pose2d position) {

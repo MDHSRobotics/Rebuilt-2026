@@ -5,7 +5,7 @@ import static java.lang.Math.*;
 import edu.wpi.first.math.controller.PIDController;
 
 public class Aiming {
-  private static PIDController yawPID = new PIDController(0.15, 0, 0);
+  private static PIDController yawPID = new PIDController(0.01, 0, 0);
 
   /**
    * @param lensHeight Distance from the floor to the Limelight's lens in inches
@@ -48,7 +48,7 @@ public class Aiming {
    * Calculate the Shooter RPM based on polynomial interpolation
    *
    * @param polynomial The polnomial to be used
-   * @param ty The limelight's ty value when looking at a tag
+   * @param distance The limelight's distance value when looking at a tag
    * @param tid The tag the apriltag is looking at
    * @return The target RPM calculate based on the distance of the robot to the hub
    */

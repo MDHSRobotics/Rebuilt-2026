@@ -59,7 +59,6 @@ public class LoggedTunableNumber {
     double currentValue = get();
     if (currentValue != m_lastValue) {
       m_lastValue = currentValue;
-      System.out.print("has changed");
       return true;
     }
 

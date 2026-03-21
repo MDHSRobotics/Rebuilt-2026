@@ -32,9 +32,9 @@ public class ShooterConstants extends SubsystemBase {
 
   /* Constants for calculating rpm */
   public static final double[] DISTANCES = {
-    0, 20, 145
+    0, 40, 64, 92
   }; // Fill out with more values to make more accurate
-  public static final double[] RPMS = {2200, 2300, 3200};
+  public static final double[] RPMS = {2400, 2500, 2650, 3000};
 
   public static final double SLOPE = 36 / 7;
   // This is the rpm of the closest distance that the shooter can shoot the ball into the hub

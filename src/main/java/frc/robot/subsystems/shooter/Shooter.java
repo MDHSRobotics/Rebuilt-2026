@@ -64,6 +64,8 @@ public class Shooter extends SubsystemBase implements Testable {
       m_table.getDoubleTopic("Kicker Motor Current Velocity ").publish();
   private final DoublePublisher m_distanceRobotToTagPub =
       m_table.getDoubleTopic("Distance From Robot to AprilTag ").publish();
+  private final DoublePublisher m_txAdjustmentPub =
+      m_table.getDoubleTopic("TX Adjustment").publish();
 
   private final NetworkTableEntry m_kickerMotorOk =
       m_inst.getTable("Test").getEntry("IntakeSpinnerMotorRPM_OK");
@@ -73,6 +75,8 @@ public class Shooter extends SubsystemBase implements Testable {
       m_inst.getTable("Test").getEntry("IntakeRightMotorRPM_OK");
 
   private NetworkTableEntry ty = m_limelight.getEntry("ty");
+  private NetworkTableEntry tx = m_limelight.getEntry("tx");
+
   private NetworkTableEntry tid = m_limelight.getEntry("tid");
 
   private double distanceFromLimelightToAprilTag = 0;
@@ -151,12 +155,13 @@ public class Shooter extends SubsystemBase implements Testable {
             FieldConstants.DISTANCE_FROM_FLOOR_TO_HUB_TAG,
             VisionConstants.LIMELIGHT_MOUNT_ANGLE,
             ty.getDouble(0));
-    m_distanceRobotToTagPub.set(m_currentDistance);
     if (tid.getDouble(0) > 0) {
       m_lastDistance = m_currentDistance;
     } else {
       m_currentDistance = m_lastDistance;
     }
+
+    m_distanceRobotToTagPub.set(m_currentDistance);
   }
 
   public void runLeftMotor(double power, double kickerPower) {
@@ -183,6 +188,11 @@ public class Shooter extends SubsystemBase implements Testable {
     m_kickerMotor.stopMotor();
   }
 
+  public void shootBall() {
+    rampUpShooter();
+    m_kickerMotor.set(ShooterConstants.KICKER_SPEED);
+  }
+
   public void shootBall(double rpm) {
     setLeftSetpoint(rpm);
     m_kickerMotor.set(ShooterConstants.KICKER_SPEED);
@@ -200,11 +210,6 @@ public class Shooter extends SubsystemBase implements Testable {
   private void setRightSetpoint(double rpm) {
     m_rightTargetVelocity = rpm;
     m_rightShooterMotorController.setSetpoint(rpm, ControlType.kVelocity);
-  }
-
-  public void shootBall() {
-    rampUpShooter();
-    m_kickerMotor.set(ShooterConstants.KICKER_SPEED);
   }
 
   public void rampUpShooter(double rpm, boolean test) {
@@ -241,13 +246,14 @@ public class Shooter extends SubsystemBase implements Testable {
   }
 
   public void rampUpShooter() {
-    double targetRPM =
-        Aiming.calculateShooterRPM(
-            ShooterConstants.SLOPE,
-            ShooterConstants.INTERCEPT,
-            m_currentDistance,
-            tid.getDouble(0));
+    double targetRPM = Aiming.calculateShooterRPM(polynomial, m_currentDistance, tid.getDouble(0));
     setLeftSetpoint(targetRPM);
+  }
+
+  public double getYawRotationalRate() {
+    double txAdjusment = Aiming.getYawTxAdjustment(tx.getDouble(0));
+    m_txAdjustmentPub.set(txAdjusment);
+    return txAdjusment;
   }
 
   public Command test() {
