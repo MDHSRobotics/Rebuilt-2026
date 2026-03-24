@@ -77,7 +77,11 @@ public class Robot extends TimedRobot {
     URCL.start();
     FollowPathCommand.warmupCommand().schedule();
     m_hasAppliedRobotRotation = false;
+
+    // Create the webserver for accessing Elastic's saved layout across computers
     WebServer.start(5800, Filesystem.getDeployDirectory().getPath());
+    // Initially open the Autonomous tab in Elastic; it will be swapped to Teleop later
+    Elastic.selectTab("Autonomous");
   }
 
   @Override
