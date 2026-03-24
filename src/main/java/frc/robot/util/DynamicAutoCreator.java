@@ -19,13 +19,13 @@ import java.util.function.Consumer;
  *  which can be set in the dashboard.
 */
 public class DynamicAutoCreator {
+  private final SendableChooser<String> m_autoType = new SendableChooser<>();
   private final SendableChooser<String> m_startingPositionChooser = new SendableChooser<>();
   private final SendableChooser<String> m_actionOneChooser = new SendableChooser<>();
-  private final SendableChooser<String> m_createAuto = new SendableChooser<>();
 
   private final Consumer<Pose2d> m_odometryResetter;
   private final AutoTimer m_autoTimer = new AutoTimer();
-  private Command m_autoSequence = null;
+  private Command m_dynamicAutoSequence = null;
 
   // Subsystems
   private final Shooter m_shooter;
@@ -42,16 +42,34 @@ public class DynamicAutoCreator {
    */
   public void publishParameters() {
 
+    // Select whether to use a dynamic or static auto command
+    m_autoType.setDefaultOption("Dynamic", "Dynamic");
+    m_autoType.addOption("Static", "Static");
+    m_autoType.onChange(this::updateDynamicCommand);
+    SmartDashboard.putData("Type of Auto Command", m_autoType);
+
     // Starting position option
-    m_startingPositionChooser.addOption("Top", "Top to ");
+    m_startingPositionChooser.setDefaultOption("Top", "Top to ");
     m_startingPositionChooser.addOption("Middle", "Middle to ");
     m_startingPositionChooser.addOption("Bottom", "Bottom to ");
     SmartDashboard.putData("Starting Position", m_startingPositionChooser);
 
     // Options for first action
-    m_actionOneChooser.addOption("Shoot", "Shoot ball");
+    m_actionOneChooser.setDefaultOption("Shoot", "Shoot ball");
     SmartDashboard.putData("Action 1", m_actionOneChooser);
 
+    // Try to generate a dynamic auto command based on the initial parameter settings
+    updateDynamicCommand("Dynamic");
+  }
+
+  private void updateDynamicCommand(String autoType) {
+    if (autoType == "Static") {
+      // Static chosen so clear dynamic command
+      m_dynamicAutoSequence = null;
+    } else {
+      // Create a dynamic command based on current settings of auto parameters
+      createOneShootingSequenceAuto();
+    }  
   }
 
   private void createOneShootingSequenceAuto() {
@@ -59,7 +77,7 @@ public class DynamicAutoCreator {
       String pathName = m_startingPositionChooser.getSelected();
       pathName += m_actionOneChooser.getSelected();
       PathPlannerPath path = PathPlannerPath.fromPathFile(pathName);
-      m_autoSequence =
+      m_dynamicAutoSequence =
           Commands.sequence(
               resetOdometryCommand(path.getStartingHolonomicPose().orElseThrow()),
               Commands.waitSeconds(1),
@@ -72,7 +90,7 @@ public class DynamicAutoCreator {
     } catch (Exception e) {
       DriverStation.reportError("Failed to load path: " + e.getMessage(), e.getStackTrace());
       System.out.println("Failed to schedule auto path" + e.getMessage() + e.getStackTrace());
-      m_autoSequence = null;
+      m_dynamicAutoSequence = null;
       return;
     }
   }
@@ -92,6 +110,6 @@ public class DynamicAutoCreator {
    * options set in the dashboard. If no settings have been selected, return null.
    */
   public Command getCommand() {
-    return m_autoSequence;
+    return m_dynamicAutoSequence;
   }
 }

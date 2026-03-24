@@ -116,7 +116,7 @@ public class RobotContainer {
     m_autoChooser.addOption("Print Test", new RunCommand(() -> System.out.println("Test")));
 
     // Publish the auto command chooser to the dashboard
-    SmartDashboard.putData("Select auto command", m_autoChooser);
+    SmartDashboard.putData("Static auto commands", m_autoChooser);
 
     // Publish to the dashboard any auto parameters that can be used to dynamically 
     // create a composite auto command. These parameters are things like starting
