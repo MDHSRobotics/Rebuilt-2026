@@ -7,9 +7,12 @@ package frc.robot;
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
+import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -32,7 +35,7 @@ import frc.robot.subsystems.hopper.HopperConstants.HopperPowers;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.Aiming;
-import frc.robot.util.AutonomousCreator;
+import frc.robot.util.DynamicAutoCreator;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.Testable;
 import java.util.ArrayList;
@@ -65,9 +68,12 @@ public class RobotContainer {
   private final Intake m_intake = new Intake();
   private final Hopper m_hopper = new Hopper();
 
-  /* Autonomous Creator */
-  private final AutonomousCreator m_autonomousCreator =
-      new AutonomousCreator(this::resetFieldPosition, m_shooter);
+  // Autonomous Chooser - A set of options for specifying the active autonomous command from a dashboard like Elastic
+  private SendableChooser<Command> m_autoChooser;
+
+  /* Autonomous Creator - This dynamically creates commands based on settings in the Elastic Auto tab */
+  private final DynamicAutoCreator m_dynamicAutoCreator =
+      new DynamicAutoCreator(this::resetFieldPosition, m_shooter);
 
   private final DriveTelemetry m_logger = new DriveTelemetry(DriveConstants.MAX_LINEAR_SPEED);
 
@@ -88,9 +94,34 @@ public class RobotContainer {
     setDefaultCommands();
     configureDriverControllers();
     configureOperatorControllers();
+    setupAutoCommandOptions();
     m_drivetrain.registerTelemetry(m_logger::telemeterize);
+  }
 
-    m_autonomousCreator.sendAutoChooser();
+  /* Define the possible auto command options that can be chosen from the dashboard.
+   * This includes:
+   *  - Pre-defined auto commands from PathPlanner
+   *  - Explicitly defined auto commands
+   *  - Dynamically generated commands using parameter settings displayed on the dashboard
+   *    (such as starting position, paths, and actions)
+   */
+  private void setupAutoCommandOptions() {
+
+    // First preload any auto commands statically defined in PathPlanner,
+    // specifying which of the PathPlanner commands should be the default (if any)
+    m_autoChooser = AutoBuilder.buildAutoChooser();
+
+    // Explicitly add any other auto commands
+    m_autoChooser.addOption("------------------------", Commands.none());
+    m_autoChooser.addOption("Print Test", new RunCommand(() -> System.out.println("Test")));
+
+    // Publish the auto command chooser to the dashboard
+    SmartDashboard.putData("Select auto command", m_autoChooser);
+
+    // Publish to the dashboard any auto parameters that can be used to dynamically 
+    // create a composite auto command. These parameters are things like starting
+    // position, actions, etc.
+    m_dynamicAutoCreator.publishParameters();
   }
 
   private void setDefaultCommands() {
@@ -290,11 +321,15 @@ public class RobotContainer {
     //     // Finally idle for the rest of auton
     //     m_drivetrain.applyRequest(() -> idle));
 
-    Command auto_command = m_autonomousCreator.getAutonomousCommand();
-    if (auto_command != null && auto_command instanceof SequentialCommandGroup) {
-      return auto_command;
+    // First see if a dynamic auto command has been defined
+    Command auto_command = m_dynamicAutoCreator.getCommand();
+    if (auto_command == null || !(auto_command instanceof SequentialCommandGroup)) {
+
+      // If not, get the static auto command selected in the AutoChooser drop-down in the dashboard
+      auto_command = m_autoChooser.getSelected();
     }
-    return new PathPlannerAuto("Drive Straight");
+
+    return auto_command;
   }
 
   /**

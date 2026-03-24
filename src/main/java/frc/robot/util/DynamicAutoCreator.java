@@ -13,8 +13,12 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.shooter.Shooter;
 import java.util.function.Consumer;
 
-/** This util class is specific to our Pathplanner path naming scheme for Rebuilt-2026 */
-public class AutonomousCreator {
+/** This util class is specific to our Pathplanner path naming scheme for Rebuilt-2026.
+ *  It can use the individual paths defined in Pathplanner to dynamically create a
+ *  composite auto command consisting of paths and actions. This is done using parameters
+ *  which can be set in the dashboard.
+*/
+public class DynamicAutoCreator {
   private final SendableChooser<String> m_startingPositionChooser = new SendableChooser<>();
   private final SendableChooser<String> m_actionOneChooser = new SendableChooser<>();
   private final SendableChooser<String> m_createAuto = new SendableChooser<>();
@@ -26,23 +30,28 @@ public class AutonomousCreator {
   // Subsystems
   private final Shooter m_shooter;
 
-  public AutonomousCreator(Consumer<Pose2d> odometryResetter, Shooter shooter) {
+  public DynamicAutoCreator(Consumer<Pose2d> odometryResetter, Shooter shooter) {
     m_odometryResetter = odometryResetter;
     m_shooter = shooter;
   }
 
-  public void sendAutoChooser() {
-    // Starting position
+  /*
+   * This method publishes to the dashboard parameter settings that can be used to dynamically
+   * create an auto command. These parameters are things like starting position and
+   * shooting strategy.
+   */
+  public void publishParameters() {
+
+    // Starting position option
     m_startingPositionChooser.addOption("Top", "Top to ");
     m_startingPositionChooser.addOption("Middle", "Middle to ");
     m_startingPositionChooser.addOption("Bottom", "Bottom to ");
     SmartDashboard.putData("Starting Position", m_startingPositionChooser);
 
     // Options for first action
-    m_actionOneChooser.addOption("Action 1", "Shoot ball");
+    m_actionOneChooser.addOption("Shoot", "Shoot ball");
+    SmartDashboard.putData("Action 1", m_actionOneChooser);
 
-    // Create Auto
-    SmartDashboard.putData("Choose Action and Create Auto", m_actionOneChooser);
   }
 
   private void createOneShootingSequenceAuto() {
@@ -63,7 +72,7 @@ public class AutonomousCreator {
     } catch (Exception e) {
       DriverStation.reportError("Failed to load path: " + e.getMessage(), e.getStackTrace());
       System.out.println("Failed to schedule auto path" + e.getMessage() + e.getStackTrace());
-      m_autoSequence = Commands.none();
+      m_autoSequence = null;
       return;
     }
   }
@@ -79,7 +88,10 @@ public class AutonomousCreator {
         });
   }
 
-  public Command getAutonomousCommand() {
+  /* This method returns the dynamicly-generated auto command based on 
+   * options set in the dashboard. If no settings have been selected, return null.
+   */
+  public Command getCommand() {
     return m_autoSequence;
   }
 }

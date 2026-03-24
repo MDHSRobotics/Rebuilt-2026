@@ -114,7 +114,8 @@ public class Robot extends TimedRobot {
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     if (m_autonomousCommand != null) {
-      System.out.println("Starting Auto: " + m_autonomousCommand.getName());
+      String autoCommandName = m_autonomousCommand.getName();
+      System.out.println("Starting Auto: " + autoCommandName);
       CommandScheduler.getInstance().schedule(m_autonomousCommand);
     }
 
