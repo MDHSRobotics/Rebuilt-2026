@@ -181,7 +181,8 @@ public class Intake extends SubsystemBase implements Testable {
                   m_spinnerMotorOk.setBoolean(Math.abs(m_spinnerEncoder.getVelocity()) < 5);
                 },
                 this)
-            .withTimeout(IntakeConstants.TEST_TIMEOUT));
+            .withTimeout(IntakeConstants.TEST_TIMEOUT),
+        Commands.run(() -> deployedPosition(), this));
   }
 
   public void resetTestIndicators() {

@@ -6,12 +6,12 @@ import java.util.Optional;
 
 public class HubStatus {
 
-  public boolean isHubActive() {
+  public static boolean isHubActive() {
     return isHubActive(0, 0);
   }
 
   /** This method is used to determine if the Hub is active including a pre and post time */
-  public boolean isHubActive(double pre, double post) {
+  public static boolean isHubActive(double pre, double post) {
     Optional<Alliance> alliance = DriverStation.getAlliance();
     if (alliance.isEmpty()) {
       return false;

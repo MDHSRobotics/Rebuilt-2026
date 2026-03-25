@@ -1,5 +1,7 @@
 package frc.robot.subsystems.shooter;
 
+import static frc.robot.util.EpsilonEquals.epsilonEquals;
+
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
@@ -19,6 +21,7 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.util.Aiming;
@@ -70,9 +73,9 @@ public class Shooter extends SubsystemBase implements Testable {
   private final NetworkTableEntry m_kickerMotorOk =
       m_inst.getTable("Test").getEntry("IntakeSpinnerMotorRPM_OK");
   private final NetworkTableEntry m_leftMotorOk =
-      m_inst.getTable("Test").getEntry("IntakeLeftMotorRPM_OK");
+      m_inst.getTable("Test").getEntry("ShooterLeftMotorRPM_OK");
   private final NetworkTableEntry m_rightMotorOk =
-      m_inst.getTable("Test").getEntry("IntakeRightMotorRPM_OK");
+      m_inst.getTable("Test").getEntry("ShooterRightMotorRPM_OK");
 
   private NetworkTableEntry ty = m_limelight.getEntry("ty");
   private NetworkTableEntry tx = m_limelight.getEntry("tx");
@@ -268,8 +271,28 @@ public class Shooter extends SubsystemBase implements Testable {
             .withTimeout(ShooterConstants.TEST_TIMEOUT),
         Commands.run(
                 () -> {
-                  m_kickerMotor.set(0.0);
+                  m_kickerMotor.stopMotor();
+                  ;
                   m_kickerMotorOk.setBoolean(Math.abs(m_kickerMotorEncoder.getVelocity()) < 5);
+                },
+                this)
+            .withTimeout(ShooterConstants.TEST_TIMEOUT),
+        new WaitCommand(ShooterConstants.TEST_TIMEOUT),
+        Commands.run(
+                () -> {
+                  setLeftSetpoint(ShooterConstants.TEST_RPM_2);
+                  m_leftMotorOk.setBoolean(
+                      epsilonEquals(
+                          m_leftShooterMotorEncoder.getVelocity(),
+                          ShooterConstants.TEST_RPM_2,
+                          200));
+                },
+                this)
+            .withTimeout(ShooterConstants.TEST_TIMEOUT),
+        Commands.run(
+                () -> {
+                  setLeftSetpoint(0);
+                  m_leftMotorOk.setBoolean(Math.abs(m_leftShooterMotorEncoder.getVelocity()) < 5);
                 },
                 this)
             .withTimeout(ShooterConstants.TEST_TIMEOUT));

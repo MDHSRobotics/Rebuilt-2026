@@ -13,15 +13,18 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.shooter.Shooter;
 import java.util.function.Consumer;
 
-/** This util class is specific to our Pathplanner path naming scheme for Rebuilt-2026.
- *  It can use the individual paths defined in Pathplanner to dynamically create a
- *  composite auto command consisting of paths and actions. This is done using parameters
- *  which can be set in the dashboard.
-*/
+/**
+ * This util class is specific to our Pathplanner path naming scheme for Rebuilt-2026. It can use
+ * the individual paths defined in Pathplanner to dynamically create a composite auto command
+ * consisting of paths and actions. This is done using parameters which can be set in the dashboard.
+ */
 public class DynamicAutoCreator {
   private final SendableChooser<String> m_autoType = new SendableChooser<>();
   private final SendableChooser<String> m_startingPositionChooser = new SendableChooser<>();
   private final SendableChooser<String> m_actionOneChooser = new SendableChooser<>();
+  private final SendableChooser<String> m_middleSequenceChooser = new SendableChooser<>();
+  private final SendableChooser<String> m_topSequenceChooser = new SendableChooser<>();
+  private final SendableChooser<String> m_bottomSequenceChooser = new SendableChooser<>();
 
   private final Consumer<Pose2d> m_odometryResetter;
   private final AutoTimer m_autoTimer = new AutoTimer();
@@ -58,6 +61,11 @@ public class DynamicAutoCreator {
     m_actionOneChooser.setDefaultOption("Shoot", "Shoot ball");
     SmartDashboard.putData("Action 1", m_actionOneChooser);
 
+    // Options for full auto sequence
+    m_middleSequenceChooser.addOption("Middle 2 Auto Sequences", "Middle 2 Auto Sequences");
+    m_topSequenceChooser.addOption("Top 2 Auto Sequences", "Top 2 Auto Sequences");
+    m_bottomSequenceChooser.addOption("Bottom 2 Auto Sequences", "Bottom 2 Auto Sequences");
+
     // Try to generate a dynamic auto command based on the initial parameter settings
     updateDynamicCommand("Dynamic");
   }
@@ -69,7 +77,7 @@ public class DynamicAutoCreator {
     } else {
       // Create a dynamic command based on current settings of auto parameters
       createOneShootingSequenceAuto();
-    }  
+    }
   }
 
   private void createOneShootingSequenceAuto() {
@@ -84,8 +92,8 @@ public class DynamicAutoCreator {
               Commands.deadline(
                   AutoBuilder.followPath(path),
                   Commands.runOnce(m_autoTimer::resetAndStart),
-                  Commands.run(() -> m_shooter.rampUpShooter(2000, true)).withTimeout(1),
-                  Commands.run(() -> m_shooter.shootBall(2000)),
+                  Commands.run(() -> m_shooter.rampUpShooter()).withTimeout(0.5),
+                  Commands.run(() -> m_shooter.shootBall()),
                   Commands.runOnce(m_autoTimer::stopAndPublish)));
     } catch (Exception e) {
       DriverStation.reportError("Failed to load path: " + e.getMessage(), e.getStackTrace());
@@ -106,7 +114,7 @@ public class DynamicAutoCreator {
         });
   }
 
-  /* This method returns the dynamicly-generated auto command based on 
+  /* This method returns the dynamicly-generated auto command based on
    * options set in the dashboard. If no settings have been selected, return null.
    */
   public Command getCommand() {

@@ -8,9 +8,9 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -23,6 +23,7 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.commands.AimingCommand;
@@ -36,6 +37,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.Aiming;
 import frc.robot.util.DynamicAutoCreator;
+import frc.robot.util.HubStatus;
 import frc.robot.util.LimelightHelpers;
 import frc.robot.util.Testable;
 import java.util.ArrayList;
@@ -68,7 +70,8 @@ public class RobotContainer {
   private final Intake m_intake = new Intake();
   private final Hopper m_hopper = new Hopper();
 
-  // Autonomous Chooser - A set of options for specifying the active autonomous command from a dashboard like Elastic
+  // Autonomous Chooser - A set of options for specifying the active autonomous command from a
+  // dashboard like Elastic
   private SendableChooser<Command> m_autoChooser;
 
   /* Autonomous Creator - This dynamically creates commands based on settings in the Elastic Auto tab */
@@ -118,10 +121,12 @@ public class RobotContainer {
     // Publish the auto command chooser to the dashboard
     SmartDashboard.putData("Static auto commands", m_autoChooser);
 
-    // Publish to the dashboard any auto parameters that can be used to dynamically 
+    // Publish to the dashboard any auto parameters that can be used to dynamically
     // create a composite auto command. These parameters are things like starting
     // position, actions, etc.
     m_dynamicAutoCreator.publishParameters();
+
+    SmartDashboard.putData("Smoke Test", buildFullTestSequence());
   }
 
   private void setDefaultCommands() {
@@ -138,7 +143,6 @@ public class RobotContainer {
                     .withRotationalDeadband(getRotationalDeadband())));
 
     //    m_shooter.getYawRotationalRate() * DriveConstants.MAX_ANGULAR_VELOCITY)));
-    
 
     // Idle while the robot is disabled. This ensures the configured
     // neutral mode is applied to the drive motors while disabled.
@@ -195,6 +199,14 @@ public class RobotContainer {
             new SequentialCommandGroup(
                 Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2),
                 new ParallelCommandGroup(Commands.run(() -> m_shooter.shootBall(), m_shooter))));
+    // Set rumble on the driver conroller when the robot is shooting the balls
+    m_driverController
+        .R1()
+        .and(new Trigger(() -> !HubStatus.isHubActive(3, 3)))
+        .whileTrue(
+            Commands.runEnd(
+                () -> m_driverController.setRumble(RumbleType.kBothRumble, 1.0),
+                () -> m_driverController.setRumble(RumbleType.kBothRumble, 0.0)));
     // Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
 
     // Align with hub
@@ -323,7 +335,7 @@ public class RobotContainer {
 
     // First see if a dynamic auto command has been defined
     Command auto_command = m_dynamicAutoCreator.getCommand();
-    if (auto_command == null || !(auto_command instanceof SequentialCommandGroup)) {
+    if (auto_command == null) {
 
       // If not, get the static auto command selected in the AutoChooser drop-down in the dashboard
       auto_command = m_autoChooser.getSelected();
