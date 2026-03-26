@@ -69,7 +69,10 @@ public class Intake extends SubsystemBase implements Testable {
 
   public Intake() {
     SparkFlexConfig intakeRightConfig = new SparkFlexConfig();
-    intakeRightConfig.smartCurrentLimit(IntakeConstants.CURRENT_LIMIT).idleMode(IdleMode.kBrake);
+    intakeRightConfig
+        .smartCurrentLimit(IntakeConstants.CURRENT_LIMIT)
+        .idleMode(IdleMode.kBrake)
+        .inverted(true);
     intakeRightConfig
         .signals
         .absoluteEncoderPositionPeriodMs(10)
@@ -119,11 +122,10 @@ public class Intake extends SubsystemBase implements Testable {
     m_spinnerMotor.stopMotor();
   }
 
-  public void runMotors(
-      double leftIntakeMotorPower, double rightIntakeMotorPower, double spinnerMotorPower) {
+  public void runMotors(double leftIntakeMotorPower, double rightIntakeMotorPower) {
     m_intakeRightMotor.set(leftIntakeMotorPower);
     m_intakeLeftMotor.set(rightIntakeMotorPower);
-    m_spinnerMotor.set(rightIntakeMotorPower);
+    ;
   }
 
   public void runMotors(double leftIntakeMotorPower) {
@@ -181,8 +183,7 @@ public class Intake extends SubsystemBase implements Testable {
                   m_spinnerMotorOk.setBoolean(Math.abs(m_spinnerEncoder.getVelocity()) < 5);
                 },
                 this)
-            .withTimeout(IntakeConstants.TEST_TIMEOUT),
-        Commands.run(() -> deployedPosition(), this));
+            .withTimeout(IntakeConstants.TEST_TIMEOUT));
   }
 
   public void resetTestIndicators() {

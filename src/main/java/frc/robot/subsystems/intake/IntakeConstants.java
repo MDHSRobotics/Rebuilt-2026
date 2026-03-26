@@ -24,13 +24,13 @@ public class IntakeConstants extends SubsystemBase {
    * The position that the left motor intake can pick up the ball in rotations. Left and right is
    * determined by looking at the front of the robot
    */
-  public static final double PICKUP_POSITION_LEFT = 0.305;
+  public static final double PICKUP_POSITION_LEFT = 0.206;
 
   /**
    * The position that the right motor intake can pick up the ball in rotations. Left and right is
    * determined by looking at the front of the robot
    */
-  public static final double PICKUP_POSITION_RIGHT = 0.905;
+  public static final double PICKUP_POSITION_RIGHT = 0.351;
 
   /**
    * The stowed position of the left motor intake in rotations Left and right is determined by
@@ -44,13 +44,13 @@ public class IntakeConstants extends SubsystemBase {
    */
   public static final double STOWED_POSITION_RIGHT = 0.440;
 
-  /** The intake speed of the spinners in RPM */
-  public static final double INTAKE_SPINNERS_SPEED = 0;
+  /** The intake power of the spinners */
+  public static final double INTAKE_SPINNERS_POWER = 0.9;
 
   /** Testing Variables */
   public static final double TEST_POWER = 0.5;
 
   public static final double TEST_RPM = 500.0;
 
-  public static final double TEST_TIMEOUT = 3.0;
+  public static final double TEST_TIMEOUT = 1.5;
 }

@@ -8,6 +8,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
 import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -34,6 +35,7 @@ import frc.robot.subsystems.drive.TunerConstants;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperConstants.HopperPowers;
 import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.util.Aiming;
 import frc.robot.util.DynamicAutoCreator;
@@ -50,15 +52,10 @@ public class RobotContainer {
   private double m_testShooterRPM = 2500;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
-  // private final DriveWithSetpointGeneration m_drive =
-  //     new DriveWithSetpointGeneration(
-  //             DriveConstants.SWERVE_SETPOINT_GENERATOR, Constants.UPDATE_PERIOD)
-  //         .withDriveRequestType(DriveRequestType.Velocity)
-  //         .withSteerRequestType(SteerRequestType.MotionMagicExpo);
   private final SwerveRequest.FieldCentric m_drive =
       new SwerveRequest.FieldCentric()
           .withDeadband(getDeadband())
-          .withRotationalDeadband(getRotationalDeadband()) // Add a 10% deadband
+          .withRotationalDeadband(getRotationalDeadband())
           .withDriveRequestType(
               DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
   private final SwerveRequest.SwerveDriveBrake m_brake =
@@ -98,6 +95,7 @@ public class RobotContainer {
     configureDriverControllers();
     configureOperatorControllers();
     setupAutoCommandOptions();
+    registerNamedCommands();
     m_drivetrain.registerTelemetry(m_logger::telemeterize);
   }
 
@@ -127,6 +125,23 @@ public class RobotContainer {
     m_dynamicAutoCreator.publishParameters();
 
     SmartDashboard.putData("Smoke Test", buildFullTestSequence());
+    SmartDashboard.putData("Intake Smoke Test", buildSubsystemTestSequence(0));
+    SmartDashboard.putData("Hopper Smoke Test", buildSubsystemTestSequence(1));
+    SmartDashboard.putData("Shooter Smoke Test", buildSubsystemTestSequence(1));
+  }
+
+  // Named Commands for Autonomous
+  private void registerNamedCommands() {
+    NamedCommands.registerCommand(
+        "Ramp Up Shooter", Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(1));
+    NamedCommands.registerCommand(
+        "Shoot Balls", Commands.run(() -> m_shooter.shootBall(), m_shooter).withTimeout(0.5));
+    NamedCommands.registerCommand(
+        "Intake Balls", Commands.run(() -> m_intake.deployedPosition(), m_intake).withTimeout(4));
+    NamedCommands.registerCommand(
+        "Run Spinners",
+        Commands.run(() -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER), m_intake)
+            .withTimeout(4));
   }
 
   private void setDefaultCommands() {
@@ -142,23 +157,11 @@ public class RobotContainer {
                     .withRotationalRate(getRotationalRate())
                     .withRotationalDeadband(getRotationalDeadband())));
 
-    //    m_shooter.getYawRotationalRate() * DriveConstants.MAX_ANGULAR_VELOCITY)));
-
     // Idle while the robot is disabled. This ensures the configured
     // neutral mode is applied to the drive motors while disabled.
     final var idle = new SwerveRequest.Idle();
     RobotModeTriggers.disabled()
         .whileTrue(m_drivetrain.applyRequest(() -> idle).ignoringDisable(true));
-
-    // m_driverController.triangle().whileTrue(m_drivetrain.applyRequest(() -> brake));
-    // m_driverController
-    //     .circle()
-    //     .whileTrue(
-    //         m_drivetrain.applyRequest(
-    //             () ->
-    //                 point.withModuleDirection(
-    //                     new Rotation2d(
-    //                         -m_driverController.getLeftY(), -m_driverController.getLeftX()))));
 
     // Subsystem Defaults
     m_shooter.setDefaultCommand(new RunCommand(() -> m_shooter.stopMotors(), m_shooter));
@@ -185,20 +188,19 @@ public class RobotContainer {
     m_driverController.R2().onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
 
     m_driverController.cross().whileTrue(m_drivetrain.applyRequest(() -> m_brake));
-    m_driverController.circle().whileTrue(m_aimingCommands.alignWithTower());
 
     // Reset the field-centric heading on left bumper press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
-    m_driverController
-        .square()
-        .whileTrue(new RunCommand(() -> System.out.println(DriveConstants.MAX_ANGULAR_VELOCITY)));
+
     // Shoot Ball
     m_driverController
         .R1()
         .whileTrue(
             new SequentialCommandGroup(
                 Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2),
-                new ParallelCommandGroup(Commands.run(() -> m_shooter.shootBall(), m_shooter))));
+                new ParallelCommandGroup(
+                    Commands.run(() -> m_shooter.shootBall(), m_shooter),
+                    Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
     // Set rumble on the driver conroller when the robot is shooting the balls
     m_driverController
         .R1()
@@ -209,7 +211,7 @@ public class RobotContainer {
                 () -> m_driverController.setRumble(RumbleType.kBothRumble, 0.0)));
     // Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
 
-    // Align with hub
+    // Lock on to hub
     m_driverController
         .triangle()
         .toggleOnTrue(
@@ -223,6 +225,23 @@ public class RobotContainer {
                                 m_shooter.getYawRotationalRate()
                                     * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
                 .until(() -> Math.abs(m_driverController.getRightX()) > 0.1));
+    // m_operatorController
+    //     .povUp()
+    //     .toggleOnTrue(
+    //         new ParallelCommandGroup(
+    //             m_drivetrain.applyRequest(
+    //                 () ->
+    //                     m_drive
+    //                         .withVelocityX(
+    //                             -m_driverController.getLeftY() * DriveConstants.MAX_LINEAR_SPEED)
+    //                         .withVelocityY(
+    //                             -m_driverController.getLeftX() * DriveConstants.MAX_LINEAR_SPEED)
+    //                         .withRotationalRate(
+    //                             Aiming.getYawTxAdjustment(
+    //
+    // LimelightHelpers.getTX(VisionConstants.FRONT_LIMELIGHT_NAME)))
+    //                         .withRotationalDeadband(getRotationalDeadband()))));
+
   }
 
   /**
@@ -231,23 +250,12 @@ public class RobotContainer {
    * ">this controller map</a> to update and view the current controls.
    */
   private void configureOperatorControllers() {
-    // m_operatorController
-    //    .x()
-    //    .whileTrue(Commands.runOnce(() -> m_shooter.runLeftMotorTest(500), m_shooter));
 
-    // m_operatorController.y().onTrue(Commands.run(() -> m_shooter.runRightMotorTest(10),
-    // m_shooter));
-    // m_operatorController.a().onTrue(Commands.run(() -> m_shooter.runMotorsTest(10), m_shooter));
-    // m_operatorController.b().onTrue(Commands.runOnce(() -> m_shooter.stopMotors(), m_shooter));
+    /* Intake Commands */
 
-    // m_operatorController
-    //    .y()
-    //    .toggleOnTrue(Commands.run(() -> m_shooter.runLeftMotor(.9, 0), m_shooter));
-
-    // **Shooter Commands**
-
-    // **Intake Commands**
-
+    m_operatorController
+        .povRight()
+        .onTrue(Commands.run(() -> m_intake.runMotors(.5, .5), m_intake).withTimeout(1.5));
     // Deploy and Stow Intake
     // m_operatorController
     //     .leftBumper()
@@ -284,7 +292,8 @@ public class RobotContainer {
         .leftTrigger()
         .toggleOnTrue(
             new ParallelCommandGroup(
-                Commands.run(() -> m_intake.runSpinner(0.7), m_intake),
+                Commands.run(
+                    () -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER), m_intake),
                 Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE))));
 
     // Spin Intake Reverse
@@ -313,26 +322,14 @@ public class RobotContainer {
                             .withRotationalDeadband(getRotationalDeadband()))));
 
     // Change Shooter Trim
-    m_operatorController.povLeft().onTrue(new InstantCommand(() -> changeTestRpm(-50)));
+    // m_operatorController.povLeft().onTrue(new InstantCommand(() -> changeTestRpm(-50)));
+    m_operatorController.povLeft().onTrue(new InstantCommand(() -> m_shooter.changeTrim(50)));
 
-    m_operatorController.povRight().onTrue(new InstantCommand(() -> changeTestRpm(50)));
+    // m_operatorController.povRight().onTrue(new InstantCommand(() -> changeTestRpm(50)));
+    m_operatorController.povRight().onTrue(new InstantCommand(() -> m_shooter.changeTrim(-50)));
   }
 
   public Command getAutonomousCommand() {
-    // Simple drive forward auton
-    // final var idle = new SwerveRequest.Idle();
-    // return Commands.sequence(
-    //     // Reset our field centric heading to match the robot
-    //     // facing away from our alliance station wall (0 deg).
-    //     m_drivetrain.runOnce(() -> m_drivetrain.seedFieldCentric(Rotation2d.kZero)),
-    //     // Then slowly drive forward (away from us) for 5 seconds.
-    //     m_drivetrain
-    //         .applyRequest(() ->
-    // m_drive.withVelocityX(0.5).withVelocityY(0).withRotationalRate(0))
-    //         .withTimeout(5.0),
-    //     // Finally idle for the rest of auton
-    //     m_drivetrain.applyRequest(() -> idle));
-
     // First see if a dynamic auto command has been defined
     Command auto_command = m_dynamicAutoCreator.getCommand();
     if (auto_command == null) {
@@ -340,7 +337,9 @@ public class RobotContainer {
       // If not, get the static auto command selected in the AutoChooser drop-down in the dashboard
       auto_command = m_autoChooser.getSelected();
     }
-
+    if (auto_command == null) {
+      System.out.println("Autonomous Command is null");
+    }
     return auto_command;
   }
 
@@ -406,6 +405,23 @@ public class RobotContainer {
       steps.add(t.test());
       steps.add(new WaitCommand(1.0));
     }
+
+    return new SequentialCommandGroup(steps.toArray(new Command[0]));
+  }
+
+  public Command buildSubsystemTestSequence(int index) {
+    List<Command> steps = new ArrayList<>();
+
+    // Reset all indicators first
+    steps.add(
+        Commands.runOnce(
+            () -> {
+              for (Testable t : testableSubsystems) {
+                t.resetTestIndicators();
+              }
+            }));
+
+    steps.add(testableSubsystems.get(index).test());
 
     return new SequentialCommandGroup(steps.toArray(new Command[0]));
   }

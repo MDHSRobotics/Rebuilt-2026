@@ -5,21 +5,78 @@
     "data": {
       "commands": [
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Bottom to Shooting Position"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Bottom to Shooting Position"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Ramp Up Shooter"
+                }
+              }
+            ]
           }
         },
         {
-          "type": "path",
+          "type": "named",
           "data": {
-            "pathName": "Bottom Shooting to Outpost"
+            "name": "Shoot Balls"
           }
         },
         {
-          "type": "path",
+          "type": "parallel",
           "data": {
-            "pathName": "Outpost to Bottom Shooting"
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Bottom Shooting to Outpost"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Intake Balls"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Run Spinners"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "parallel",
+          "data": {
+            "commands": [
+              {
+                "type": "path",
+                "data": {
+                  "pathName": "Outpost to Bottom Shooting"
+                }
+              },
+              {
+                "type": "named",
+                "data": {
+                  "name": "Ramp Up Shooter"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "Shoot Balls"
           }
         }
       ]

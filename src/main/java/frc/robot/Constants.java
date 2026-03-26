@@ -37,7 +37,7 @@ public final class Constants {
     public static final double FRONT_LIMELIGHT_FORWARD_DISTANCE_INCHES = 22.416;
 
     /** Distance from the floor to the front limelight lens in Inches */
-    public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(23.75).in(Meters);
+    public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(23.1875).in(Meters);
 
     public static final double FRONT_LIMELIGHT_UP_DISTANCE_INCHES = 23.75;
 

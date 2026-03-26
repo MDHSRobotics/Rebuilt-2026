@@ -22,9 +22,6 @@ public class DynamicAutoCreator {
   private final SendableChooser<String> m_autoType = new SendableChooser<>();
   private final SendableChooser<String> m_startingPositionChooser = new SendableChooser<>();
   private final SendableChooser<String> m_actionOneChooser = new SendableChooser<>();
-  private final SendableChooser<String> m_middleSequenceChooser = new SendableChooser<>();
-  private final SendableChooser<String> m_topSequenceChooser = new SendableChooser<>();
-  private final SendableChooser<String> m_bottomSequenceChooser = new SendableChooser<>();
 
   private final Consumer<Pose2d> m_odometryResetter;
   private final AutoTimer m_autoTimer = new AutoTimer();
@@ -60,11 +57,6 @@ public class DynamicAutoCreator {
     // Options for first action
     m_actionOneChooser.setDefaultOption("Shoot", "Shoot ball");
     SmartDashboard.putData("Action 1", m_actionOneChooser);
-
-    // Options for full auto sequence
-    m_middleSequenceChooser.addOption("Middle 2 Auto Sequences", "Middle 2 Auto Sequences");
-    m_topSequenceChooser.addOption("Top 2 Auto Sequences", "Top 2 Auto Sequences");
-    m_bottomSequenceChooser.addOption("Bottom 2 Auto Sequences", "Bottom 2 Auto Sequences");
 
     // Try to generate a dynamic auto command based on the initial parameter settings
     updateDynamicCommand("Dynamic");

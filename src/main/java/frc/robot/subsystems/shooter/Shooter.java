@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.util.Aiming;
+import frc.robot.util.HubStatus;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.PolynomialInterpolation;
 import frc.robot.util.Testable;
@@ -82,9 +83,6 @@ public class Shooter extends SubsystemBase implements Testable {
 
   private NetworkTableEntry tid = m_limelight.getEntry("tid");
 
-  private double distanceFromLimelightToAprilTag = 0;
-  private double shooter_trim = 0;
-
   private final LoggedTunableNumber kP =
       new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_P_SHOOTER);
   private final LoggedTunableNumber kI =
@@ -96,6 +94,9 @@ public class Shooter extends SubsystemBase implements Testable {
   private double m_rightTargetVelocity = 0;
   private double m_currentDistance = 0;
   private double m_lastDistance = 0;
+
+  private double m_shooterTrim = 0;
+
   SparkFlexConfig shooterLeftMotorConfig;
 
   private PolynomialInterpolation polynomial =
@@ -202,7 +203,7 @@ public class Shooter extends SubsystemBase implements Testable {
   }
 
   public void changeTrim(double amount) {
-    shooter_trim += amount;
+    m_shooterTrim += amount;
   }
 
   private void setLeftSetpoint(double rpm) {
@@ -223,12 +224,11 @@ public class Shooter extends SubsystemBase implements Testable {
     }
     double tagID =
         NetworkTableInstance.getDefault().getTable("limelight").getEntry("tid").getDouble(0);
-    double targetSpeed = rpm;
     Optional<Alliance> alliance = DriverStation.getAlliance();
     if (alliance.isEmpty()) {
       return;
     }
-    boolean hubActive = test; // || hubactive()
+    boolean hubActive = HubStatus.isHubActive(); // || hubactive()
     if (alliance.get() == Alliance.Blue) {
       if (hubActive) { // && (tagID == 26 || tagID == 25)) {
         setLeftSetpoint(rpm);
@@ -250,6 +250,7 @@ public class Shooter extends SubsystemBase implements Testable {
 
   public void rampUpShooter() {
     double targetRPM = Aiming.calculateShooterRPM(polynomial, m_currentDistance, tid.getDouble(0));
+    targetRPM += m_shooterTrim;
     setLeftSetpoint(targetRPM);
   }
 

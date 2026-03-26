@@ -30,7 +30,7 @@ public class ShooterConstants extends SubsystemBase {
 
   public static final double TEST_RPM_2 = 1000.0;
 
-  public static final double TEST_TIMEOUT = 3.0;
+  public static final double TEST_TIMEOUT = 1.5;
 
   /* Constants for calculating rpm */
   public static final double[] DISTANCES = {
