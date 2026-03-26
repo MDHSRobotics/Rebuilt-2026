@@ -43,8 +43,8 @@ public class DynamicAutoCreator {
   public void publishParameters() {
 
     // Select whether to use a dynamic or static auto command
-    m_autoType.setDefaultOption("Dynamic", "Dynamic");
-    m_autoType.addOption("Static", "Static");
+    m_autoType.addOption("Dynamic", "Dynamic");
+    m_autoType.setDefaultOption("Static", "Static");
     m_autoType.onChange(this::updateDynamicCommand);
     SmartDashboard.putData("Type of Auto Command", m_autoType);
 
@@ -52,18 +52,21 @@ public class DynamicAutoCreator {
     m_startingPositionChooser.setDefaultOption("Top", "Top to ");
     m_startingPositionChooser.addOption("Middle", "Middle to ");
     m_startingPositionChooser.addOption("Bottom", "Bottom to ");
+    m_startingPositionChooser.onChange(this::updateDynamicCommand);
     SmartDashboard.putData("Starting Position", m_startingPositionChooser);
 
     // Options for first action
     m_actionOneChooser.setDefaultOption("Shoot", "Shoot ball");
+    m_actionOneChooser.onChange(this::updateDynamicCommand);
     SmartDashboard.putData("Action 1", m_actionOneChooser);
 
     // Try to generate a dynamic auto command based on the initial parameter settings
-    updateDynamicCommand("Dynamic");
+    updateDynamicCommand("");
   }
 
-  private void updateDynamicCommand(String autoType) {
-    if (autoType == "Static") {
+  private void updateDynamicCommand(String changedSetting) {
+    String autoType = m_autoType.getSelected();
+    if (autoType.equals("Static")) {
       // Static chosen so clear dynamic command
       m_dynamicAutoSequence = null;
     } else {

@@ -69,7 +69,7 @@ public class RobotContainer {
 
   // Autonomous Chooser - A set of options for specifying the active autonomous command from a
   // dashboard like Elastic
-  private SendableChooser<Command> m_autoChooser;
+  private SendableChooser<Command> m_staticAutoChooser;
 
   /* Autonomous Creator - This dynamically creates commands based on settings in the Elastic Auto tab */
   private final DynamicAutoCreator m_dynamicAutoCreator =
@@ -110,14 +110,14 @@ public class RobotContainer {
 
     // First preload any auto commands statically defined in PathPlanner,
     // specifying which of the PathPlanner commands should be the default (if any)
-    m_autoChooser = AutoBuilder.buildAutoChooser();
+    m_staticAutoChooser = AutoBuilder.buildAutoChooser();
 
     // Explicitly add any other auto commands
-    m_autoChooser.addOption("------------------------", Commands.none());
-    m_autoChooser.addOption("Print Test", new RunCommand(() -> System.out.println("Test")));
+    m_staticAutoChooser.addOption("------------------------", Commands.none());
+    m_staticAutoChooser.addOption("Print Test", new RunCommand(() -> System.out.println("Test")));
 
     // Publish the auto command chooser to the dashboard
-    SmartDashboard.putData("Static auto commands", m_autoChooser);
+    SmartDashboard.putData("Static auto commands", m_staticAutoChooser);
 
     // Publish to the dashboard any auto parameters that can be used to dynamically
     // create a composite auto command. These parameters are things like starting
@@ -335,7 +335,7 @@ public class RobotContainer {
     if (auto_command == null) {
 
       // If not, get the static auto command selected in the AutoChooser drop-down in the dashboard
-      auto_command = m_autoChooser.getSelected();
+      auto_command = m_staticAutoChooser.getSelected();
     }
     if (auto_command == null) {
       System.out.println("Autonomous Command is null");

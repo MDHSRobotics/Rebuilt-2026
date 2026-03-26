@@ -34,7 +34,7 @@
           {
             "title": "Starting Position",
             "x": 0.0,
-            "y": 128.0,
+            "y": 384.0,
             "width": 256.0,
             "height": 128.0,
             "type": "ComboBox Chooser",
@@ -47,7 +47,7 @@
           {
             "title": "Action 1",
             "x": 256.0,
-            "y": 128.0,
+            "y": 384.0,
             "width": 256.0,
             "height": 128.0,
             "type": "ComboBox Chooser",
@@ -61,7 +61,7 @@
             "title": "Type of Auto Command",
             "x": 0.0,
             "y": 0.0,
-            "width": 1024.0,
+            "width": 512.0,
             "height": 128.0,
             "type": "Split Button Chooser",
             "properties": {
@@ -71,9 +71,9 @@
           },
           {
             "title": "Static auto commands",
-            "x": 640.0,
+            "x": 0.0,
             "y": 128.0,
-            "width": 384.0,
+            "width": 512.0,
             "height": 128.0,
             "type": "ComboBox Chooser",
             "properties": {
