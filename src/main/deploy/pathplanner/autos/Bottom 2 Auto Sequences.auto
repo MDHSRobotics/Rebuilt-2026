@@ -5,6 +5,12 @@
     "data": {
       "commands": [
         {
+          "type": "named",
+          "data": {
+            "name": "Deploy Intake"
+          }
+        },
+        {
           "type": "parallel",
           "data": {
             "commands": [
@@ -43,12 +49,6 @@
                 "type": "named",
                 "data": {
                   "name": "Intake Balls"
-                }
-              },
-              {
-                "type": "named",
-                "data": {
-                  "name": "Run Spinners"
                 }
               }
             ]

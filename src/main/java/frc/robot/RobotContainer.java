@@ -94,8 +94,8 @@ public class RobotContainer {
     setDefaultCommands();
     configureDriverControllers();
     configureOperatorControllers();
-    setupAutoCommandOptions();
     registerNamedCommands();
+    setupAutoCommandOptions();
     m_drivetrain.registerTelemetry(m_logger::telemeterize);
   }
 
@@ -137,9 +137,9 @@ public class RobotContainer {
     NamedCommands.registerCommand(
         "Shoot Balls", Commands.run(() -> m_shooter.shootBall(), m_shooter).withTimeout(0.5));
     NamedCommands.registerCommand(
-        "Intake Balls", Commands.run(() -> m_intake.deployedPosition(), m_intake).withTimeout(4));
+        "Deploy Intake", Commands.run(() -> m_intake.runMotors(0.5, 0.5), m_intake).withTimeout(1));
     NamedCommands.registerCommand(
-        "Run Spinners",
+        "Intake Balls",
         Commands.run(() -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER), m_intake)
             .withTimeout(4));
   }
