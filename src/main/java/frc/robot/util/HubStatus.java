@@ -77,4 +77,21 @@ public class HubStatus {
     // Fallback (shouldn't be reached given the windows cover 30–130).
     return true;
   }
+
+  public static double timeToNextShift() {
+    double matchTime = DriverStation.getMatchTime();
+    // Shift time windows: each entry is {start, end} in match time (counting down).
+    // Regions outside these windows (>130 and <30) are always active.
+    double[][] shiftWindows = {
+      {130, 105}, // Shift 1
+      {105, 80}, // Shift 2
+      {80, 55}, // Shift 3
+      {55, 30}, // Shift 4
+    };
+    int index = 0;
+    if (index < shiftWindows[index][0]) {
+      index++;
+    }
+    return shiftWindows[index][0] - matchTime;
+  }
 }

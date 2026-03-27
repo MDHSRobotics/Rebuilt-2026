@@ -18,6 +18,7 @@ import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -96,6 +97,7 @@ public class Shooter extends SubsystemBase implements Testable {
   private double m_lastDistance = 0;
 
   private double m_shooterTrim = 0;
+  private boolean m_tagIsSeen = false;
 
   SparkFlexConfig shooterLeftMotorConfig;
 
@@ -136,6 +138,8 @@ public class Shooter extends SubsystemBase implements Testable {
         .idleMode(IdleMode.kBrake);
     m_kickerMotor.configure(
         kickerMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
+
+    SmartDashboard.putBoolean("AprilTag is recognized", m_tagIsSeen);
   }
 
   @Override
@@ -166,6 +170,11 @@ public class Shooter extends SubsystemBase implements Testable {
     }
 
     m_distanceRobotToTagPub.set(m_currentDistance);
+    if (tid.getDouble(0) > 0) {
+      m_tagIsSeen = true;
+    } else {
+      m_tagIsSeen = false;
+    }
   }
 
   public void runLeftMotor(double power, double kickerPower) {

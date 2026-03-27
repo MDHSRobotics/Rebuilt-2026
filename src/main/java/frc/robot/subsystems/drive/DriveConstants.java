@@ -56,7 +56,7 @@ public class DriveConstants {
       RotationsPerSecond.of(MAX_LINEAR_SPEED / CENTER_OF_ROBOT_TO_CANCODER_DISTANCE.in(Meters))
           .in(RadiansPerSecond);
 
-  public static final double MAX_TELEOP_ANGULAR_VELOCITY = 2.0 * Math.PI; // rad/s
+  public static final double MAX_TELEOP_ANGULAR_VELOCITY = 2.5 * Math.PI; // rad/s
 
   /**
    * Constraints for the <a
@@ -115,7 +115,7 @@ public class DriveConstants {
   /**
    * Linear acceleration gain from {@link
    * com.ctre.phoenix6.swerve.SwerveRequest.SysIdSwerveTranslation a SysId routine}. This value
-   * needs to be testedand changed later
+   * needs to be tested and changed later
    */
   private static final Per<VoltageUnit, LinearAccelerationUnit> K_A_LINEAR =
       VoltsPerMeterPerSecondSquared.ofNative(0 / WHEEL_ROTATIONS_TO_METERS_CONVERSION);
@@ -132,12 +132,13 @@ public class DriveConstants {
    *     href="https://www.chiefdelphi.com/t/question-about-calculating-moi-with-sysid/490893">why
    *     we use drivebase radius instead of trackwidth / 2</a>
    */
-  private static final MomentOfInertia ROBOT_MOI =
-      KilogramSquareMeters.of(
-          ROBOT_MASS.in(Kilograms)
-              * CENTER_OF_ROBOT_TO_CANCODER_DISTANCE.in(Meters)
-              * (K_A_ANGULAR.in(VoltsPerRadianPerSecondSquared)
-                  / K_A_LINEAR.in(VoltsPerMeterPerSecondSquared)));
+  //   private static final MomentOfInertia ROBOT_MOI =
+  //       KilogramSquareMeters.of(
+  //           ROBOT_MASS.in(Kilograms)
+  //               * CENTER_OF_ROBOT_TO_CANCODER_DISTANCE.in(Meters)
+  //               * (K_A_ANGULAR.in(VoltsPerRadianPerSecondSquared)
+  //                   / K_A_LINEAR.in(VoltsPerMeterPerSecondSquared)));
+  private static final MomentOfInertia ROBOT_MOI = KilogramSquareMeters.of(4.483);
 
   /**
    * Wheel coefficient of friction for <a

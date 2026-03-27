@@ -45,6 +45,7 @@ public class Hopper extends SubsystemBase implements Testable {
 
   public void runHopper(HopperConstants.HopperPowers powerEnum) {
     m_hopperMotor.set(powerEnum.power);
+    m_hopperSpeedPub.set(m_hopperEncoder.getVelocity());
   }
 
   public void stopMotors() {

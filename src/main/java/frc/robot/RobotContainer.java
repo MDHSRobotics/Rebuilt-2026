@@ -26,8 +26,6 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ControllerConstants;
-import frc.robot.Constants.VisionConstants;
-import frc.robot.commands.AimingCommand;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveTelemetry;
@@ -37,10 +35,8 @@ import frc.robot.subsystems.hopper.HopperConstants.HopperPowers;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
-import frc.robot.util.Aiming;
 import frc.robot.util.DynamicAutoCreator;
 import frc.robot.util.HubStatus;
-import frc.robot.util.LimelightHelpers;
 import frc.robot.util.Testable;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +46,7 @@ public class RobotContainer {
   private double m_robotSpeed = 1.0;
 
   private double m_testShooterRPM = 2500;
+  private boolean m_isLocked = false;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric m_drive =
@@ -84,9 +81,6 @@ public class RobotContainer {
       new CommandXboxController(ControllerConstants.OPERATOR_CONTROLLER_PORT);
 
   public final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
-
-  private final AimingCommand m_aimingCommands =
-      new AimingCommand(m_drivetrain, this::getVelocityX, this::getVelocityY, this::getDeadband);
 
   private final List<Testable> testableSubsystems = List.of(m_intake, m_hopper, m_shooter);
 
@@ -127,7 +121,11 @@ public class RobotContainer {
     SmartDashboard.putData("Smoke Test", buildFullTestSequence());
     SmartDashboard.putData("Intake Smoke Test", buildSubsystemTestSequence(0));
     SmartDashboard.putData("Hopper Smoke Test", buildSubsystemTestSequence(1));
-    SmartDashboard.putData("Shooter Smoke Test", buildSubsystemTestSequence(1));
+    SmartDashboard.putData("Shooter Smoke Test", buildSubsystemTestSequence(2));
+
+    SmartDashboard.putBoolean("Hub Active", HubStatus.isHubActive());
+    SmartDashboard.putBoolean("Locked on to Apriltag", m_isLocked);
+    SmartDashboard.putNumber("Time to Next Shift", HubStatus.timeToNextShift());
   }
 
   // Named Commands for Autonomous
@@ -171,7 +169,7 @@ public class RobotContainer {
 
   /**
    * Use this method to map driver controls and commands please use <a href="
-   * https://www.padcrafter.com/?templates=Driver+Controller&plat=1&leftStick=Drive&aButton=Lock+wheels&xButton=Re-enable+manual+driving&yButton=Face+processor&leftBumper=Face+Left+Coral+Station&backButton=Reset+robot+orientation&rightBumper=Face+Right+Coral+Station&bButton=Face+reef+wall&leftTrigger=Slow+Mode&rightTrigger=Super+Slow+Mode&dpadLeft=&rightStick=Rotate&dpadDown=Climb&dpadUp=Raise+climb
+   * https://www.padcrafter.com/?templates=Driver+Controller&plat=1&rightTrigger=Quarter+Speed&leftStick=Drive&rightStick=Rotate&aButton=Brake&bButton=&yButton=Lock+in+to+hub&rightBumper=Shoot+Balls&startButton=Reset+Field+Orientation
    * ">this controller map</a> to update and view the current controls.
    */
   private void configureDriverControllers() {
@@ -225,6 +223,7 @@ public class RobotContainer {
                                 m_shooter.getYawRotationalRate()
                                     * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
                 .until(() -> Math.abs(m_driverController.getRightX()) > 0.1));
+    m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
     // m_operatorController
     //     .povUp()
     //     .toggleOnTrue(
@@ -246,7 +245,7 @@ public class RobotContainer {
 
   /**
    * Use this method to map operator controller controls and commands please use <a href="
-   * https://www.padcrafter.com/?templates=Driver+Controller&plat=1&rightTrigger=Quarter+Speed&leftStick=Drive&rightStick=Rotate&aButton=Align+with+Hub&bButton=Align+with+Tower
+   * https://www.padcrafter.com/?templates=Driver+Controller&plat=0&rightTrigger=Spin+Hopper&leftStick=Drive&rightStick=&aButton=&bButton=&dpadDown=Lower+intake&rightBumper=Spin+Intake&leftBumper=Spin+Intake+Reverse&leftTrigger=Spin+Hopper+Reverse&dpadRight=Increase+Shooter+RPM&dpadLeft=Decrease+Shooter+RPM
    * ">this controller map</a> to update and view the current controls.
    */
   private void configureOperatorControllers() {
@@ -254,7 +253,7 @@ public class RobotContainer {
     /* Intake Commands */
 
     m_operatorController
-        .povRight()
+        .povDown()
         .onTrue(Commands.run(() -> m_intake.runMotors(.5, .5), m_intake).withTimeout(1.5));
     // Deploy and Stow Intake
     // m_operatorController
@@ -277,11 +276,6 @@ public class RobotContainer {
     // m_operatorController.b().onTrue(Commands.run(() -> m_intake.runMotors(0.8), m_intake));
 
     m_operatorController
-        .x()
-        .toggleOnTrue(
-            new RunCommand(() -> m_shooter.rampUpShooter(m_testShooterRPM, true), m_shooter));
-
-    m_operatorController
         .y()
         .whileTrue(
             new ParallelCommandGroup(
@@ -289,7 +283,7 @@ public class RobotContainer {
                 Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper)));
     // Spin Intake
     m_operatorController
-        .leftTrigger()
+        .rightBumper()
         .toggleOnTrue(
             new ParallelCommandGroup(
                 Commands.run(
@@ -304,29 +298,19 @@ public class RobotContainer {
                 Commands.run(() -> m_intake.runSpinner(-0.9), m_intake),
                 Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE))));
 
-    // Lock on to the Hub
     m_operatorController
-        .povUp()
-        .toggleOnTrue(
-            new ParallelCommandGroup(
-                m_drivetrain.applyRequest(
-                    () ->
-                        m_drive
-                            .withVelocityX(
-                                -m_driverController.getLeftY() * DriveConstants.MAX_LINEAR_SPEED)
-                            .withVelocityY(
-                                -m_driverController.getLeftX() * DriveConstants.MAX_LINEAR_SPEED)
-                            .withRotationalRate(
-                                Aiming.getYawTxAdjustment(
-                                    LimelightHelpers.getTX(VisionConstants.FRONT_LIMELIGHT_NAME)))
-                            .withRotationalDeadband(getRotationalDeadband()))));
+        .leftTrigger()
+        .whileTrue(Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE), m_hopper));
+    m_operatorController
+        .rightTrigger()
+        .whileTrue(Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE), m_hopper));
 
     // Change Shooter Trim
     // m_operatorController.povLeft().onTrue(new InstantCommand(() -> changeTestRpm(-50)));
-    m_operatorController.povLeft().onTrue(new InstantCommand(() -> m_shooter.changeTrim(50)));
+    m_operatorController.povRight().onTrue(new InstantCommand(() -> m_shooter.changeTrim(50)));
 
     // m_operatorController.povRight().onTrue(new InstantCommand(() -> changeTestRpm(50)));
-    m_operatorController.povRight().onTrue(new InstantCommand(() -> m_shooter.changeTrim(-50)));
+    m_operatorController.povLeft().onTrue(new InstantCommand(() -> m_shooter.changeTrim(-50)));
   }
 
   public Command getAutonomousCommand() {
