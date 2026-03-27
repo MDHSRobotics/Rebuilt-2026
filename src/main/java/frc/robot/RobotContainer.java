@@ -122,10 +122,6 @@ public class RobotContainer {
     SmartDashboard.putData("Intake Smoke Test", buildSubsystemTestSequence(0));
     SmartDashboard.putData("Hopper Smoke Test", buildSubsystemTestSequence(1));
     SmartDashboard.putData("Shooter Smoke Test", buildSubsystemTestSequence(2));
-
-    SmartDashboard.putBoolean("Hub Active", HubStatus.isHubActive());
-    SmartDashboard.putBoolean("Locked on to Apriltag", m_isLocked);
-    SmartDashboard.putNumber("Time to Next Shift", HubStatus.timeToNextShift());
   }
 
   // Named Commands for Autonomous
@@ -207,7 +203,6 @@ public class RobotContainer {
             Commands.runEnd(
                 () -> m_driverController.setRumble(RumbleType.kBothRumble, 1.0),
                 () -> m_driverController.setRumble(RumbleType.kBothRumble, 0.0)));
-    // Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
 
     // Lock on to hub
     m_driverController
@@ -224,23 +219,6 @@ public class RobotContainer {
                                     * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
                 .until(() -> Math.abs(m_driverController.getRightX()) > 0.1));
     m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
-    // m_operatorController
-    //     .povUp()
-    //     .toggleOnTrue(
-    //         new ParallelCommandGroup(
-    //             m_drivetrain.applyRequest(
-    //                 () ->
-    //                     m_drive
-    //                         .withVelocityX(
-    //                             -m_driverController.getLeftY() * DriveConstants.MAX_LINEAR_SPEED)
-    //                         .withVelocityY(
-    //                             -m_driverController.getLeftX() * DriveConstants.MAX_LINEAR_SPEED)
-    //                         .withRotationalRate(
-    //                             Aiming.getYawTxAdjustment(
-    //
-    // LimelightHelpers.getTX(VisionConstants.FRONT_LIMELIGHT_NAME)))
-    //                         .withRotationalDeadband(getRotationalDeadband()))));
-
   }
 
   /**
@@ -371,6 +349,13 @@ public class RobotContainer {
 
   public void changeTestRpm(double val) {
     m_testShooterRPM += val;
+  }
+
+  /** Update dashboard outputs. */
+  public void updateDashboardOutputs() {
+    SmartDashboard.putBoolean("Hub Active", HubStatus.isHubActive());
+    SmartDashboard.putBoolean("Locked on to Apriltag", m_isLocked);
+    SmartDashboard.putNumber("Time to Next Shift", HubStatus.timeToNextShift());
   }
 
   public Command buildFullTestSequence() {

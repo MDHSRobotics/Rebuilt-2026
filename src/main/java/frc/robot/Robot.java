@@ -89,6 +89,7 @@ public class Robot extends TimedRobot {
     m_timeAndJoystickReplay.update();
     CommandScheduler.getInstance().run();
     m_matchTimePub.set(DriverStation.getMatchTime());
+    m_robotContainer.updateDashboardOutputs();
   }
 
   @Override

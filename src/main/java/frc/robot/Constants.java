@@ -17,7 +17,7 @@ public final class Constants {
   /** The update period of the robot in seconds. */
   public static final double UPDATE_PERIOD = 0.02;
 
-  public static final boolean TUNING_MODE = true;
+  public static final boolean TUNING_MODE = false;
 
   public static class ControllerConstants {
     private ControllerConstants() {}

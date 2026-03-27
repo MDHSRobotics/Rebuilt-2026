@@ -80,18 +80,30 @@ public class HubStatus {
 
   public static double timeToNextShift() {
     double matchTime = DriverStation.getMatchTime();
-    // Shift time windows: each entry is {start, end} in match time (counting down).
-    // Regions outside these windows (>130 and <30) are always active.
     double[][] shiftWindows = {
-      {130, 105}, // Shift 1
-      {105, 80}, // Shift 2
-      {80, 55}, // Shift 3
-      {55, 30}, // Shift 4
+      {130, 105},
+      {105, 80},
+      {80, 55},
+      {55, 30},
     };
-    int index = 0;
-    if (index < shiftWindows[index][0]) {
-      index++;
+
+    for (int i = 0; i < shiftWindows.length; i++) {
+      // If matchTime is above this window's start, the next shift hasn't begun yet
+      if (matchTime > shiftWindows[i][0]) {
+        // Not yet reached any window, return time to first shift
+        return shiftWindows[0][0] - matchTime;
+      }
+      // If matchTime is within this window
+      if (matchTime <= shiftWindows[i][0] && matchTime > shiftWindows[i][1]) {
+        // Return time to the next window's start, or 0 if this is the last one
+        if (i + 1 < shiftWindows.length) {
+          return shiftWindows[i + 1][0] - matchTime;
+        } else {
+          return matchTime; // Past all shifts
+        }
+      }
     }
-    return shiftWindows[index][0] - matchTime;
+
+    return matchTime; // matchTime <= 30, no more shifts
   }
 }

@@ -16,8 +16,6 @@ import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -26,11 +24,9 @@ import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.util.Aiming;
-import frc.robot.util.HubStatus;
 import frc.robot.util.LoggedTunableNumber;
 import frc.robot.util.PolynomialInterpolation;
 import frc.robot.util.Testable;
-import java.util.Optional;
 
 public class Shooter extends SubsystemBase implements Testable {
   /* Spark Flex Motors */
@@ -164,35 +160,19 @@ public class Shooter extends SubsystemBase implements Testable {
             VisionConstants.LIMELIGHT_MOUNT_ANGLE,
             ty.getDouble(0));
     if (tid.getDouble(0) > 0) {
+      m_tagIsSeen = true;
       m_lastDistance = m_currentDistance;
     } else {
+      m_tagIsSeen = false;
       m_currentDistance = m_lastDistance;
     }
 
     m_distanceRobotToTagPub.set(m_currentDistance);
-    if (tid.getDouble(0) > 0) {
-      m_tagIsSeen = true;
-    } else {
-      m_tagIsSeen = false;
-    }
   }
 
   public void runLeftMotor(double power, double kickerPower) {
     m_shooterLeftMotor.set(power);
     m_kickerMotor.set(kickerPower);
-  }
-
-  public void runLeftMotorTest(double setpoint) {
-    setLeftSetpoint(setpoint);
-  }
-
-  public void runRightMotorTest(double setpoint) {
-    setRightSetpoint(setpoint);
-  }
-
-  public void runMotorsTest(double setpoint) {
-    setRightSetpoint(setpoint);
-    setLeftSetpoint(setpoint);
   }
 
   public void stopMotors() {
@@ -225,38 +205,6 @@ public class Shooter extends SubsystemBase implements Testable {
     m_rightShooterMotorController.setSetpoint(rpm, ControlType.kVelocity);
   }
 
-  public void rampUpShooter(double rpm, boolean test) {
-    // Account for whether we are in a testing mode, or in an actual match or practice match
-    if (test) {
-      setLeftSetpoint(rpm);
-      return;
-    }
-    double tagID =
-        NetworkTableInstance.getDefault().getTable("limelight").getEntry("tid").getDouble(0);
-    Optional<Alliance> alliance = DriverStation.getAlliance();
-    if (alliance.isEmpty()) {
-      return;
-    }
-    boolean hubActive = HubStatus.isHubActive(); // || hubactive()
-    if (alliance.get() == Alliance.Blue) {
-      if (hubActive) { // && (tagID == 26 || tagID == 25)) {
-        setLeftSetpoint(rpm);
-      } else {
-        m_shooterLeftMotor.stopMotor();
-        m_shooterRightMotor.stopMotor();
-        m_kickerMotor.stopMotor();
-      }
-    } else if (alliance.get() == Alliance.Red) {
-      if (hubActive) { // && (tagID == 9 || tagID == 10)) {
-        setLeftSetpoint(rpm);
-      } else {
-        m_shooterLeftMotor.stopMotor();
-        m_shooterRightMotor.stopMotor();
-        m_kickerMotor.stopMotor();
-      }
-    }
-  }
-
   public void rampUpShooter() {
     double targetRPM = Aiming.calculateShooterRPM(polynomial, m_currentDistance, tid.getDouble(0));
     targetRPM += m_shooterTrim;
@@ -287,7 +235,7 @@ public class Shooter extends SubsystemBase implements Testable {
                 },
                 this)
             .withTimeout(ShooterConstants.TEST_TIMEOUT),
-        new WaitCommand(ShooterConstants.TEST_TIMEOUT),
+        new WaitCommand(ShooterConstants.TEST_TIMEOUT / 4),
         Commands.run(
                 () -> {
                   setLeftSetpoint(ShooterConstants.TEST_RPM_2);
