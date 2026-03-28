@@ -84,6 +84,9 @@ public class RobotContainer {
 
   private final List<Testable> testableSubsystems = List.of(m_intake, m_hopper, m_shooter);
 
+  private Trigger m_autoAlignCanceled =
+      new Trigger(() -> Math.abs(m_driverController.getRightX()) > 0.1);
+
   public RobotContainer() {
     setDefaultCommands();
     configureDriverControllers();
@@ -127,7 +130,7 @@ public class RobotContainer {
   // Named Commands for Autonomous
   private void registerNamedCommands() {
     NamedCommands.registerCommand(
-        "Ramp Up Shooter", Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(1));
+        "Ramp Up Shooter", Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2));
     NamedCommands.registerCommand(
         "Shoot Balls",
         new ParallelCommandGroup(
@@ -174,10 +177,26 @@ public class RobotContainer {
   private void configureDriverControllers() {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
-    // m_driverController.povUp().whileTrue(m_drivetrain.sysIdDynamic(Direction.kForward));
-    // m_driverController.povDown().whileTrue(m_drivetrain.sysIdDynamic(Direction.kReverse));
-    // m_driverController.povRight().whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kForward));
-    // m_driverController.povLeft().whileTrue(m_drivetrain.sysIdQuasistatic(Direction.kReverse));
+    m_driverController
+        .povUp()
+        .whileTrue(
+            m_drivetrain.sysIdDynamic(
+                edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kForward));
+    m_driverController
+        .povDown()
+        .whileTrue(
+            m_drivetrain.sysIdDynamic(
+                edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kReverse));
+    m_driverController
+        .povRight()
+        .whileTrue(
+            m_drivetrain.sysIdQuasistatic(
+                edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kForward));
+    m_driverController
+        .povLeft()
+        .whileTrue(
+            m_drivetrain.sysIdQuasistatic(
+                edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kReverse));
 
     // Quarter Speed
     m_driverController.R2().onTrue(Commands.runOnce(() -> m_robotSpeed = 0.25));
@@ -186,7 +205,7 @@ public class RobotContainer {
 
     m_driverController.cross().whileTrue(m_drivetrain.applyRequest(() -> m_brake));
 
-    // Reset the field-centric heading on left bumper press.
+    // Reset the field-centric heading on option press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
 
     // Shoot Ball
@@ -204,8 +223,8 @@ public class RobotContainer {
         .and(new Trigger(() -> !HubStatus.isHubActive(3, 3)))
         .whileTrue(
             Commands.runEnd(
-                () -> m_driverController.setRumble(RumbleType.kBothRumble, 1.0),
-                () -> m_driverController.setRumble(RumbleType.kBothRumble, 0.0)));
+                () -> m_driverController.getHID().setRumble(RumbleType.kBothRumble, 1.0),
+                () -> m_driverController.getHID().setRumble(RumbleType.kBothRumble, 0.0)));
 
     // Lock on to hub
     m_driverController
@@ -222,6 +241,7 @@ public class RobotContainer {
                                     * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
                 .until(() -> Math.abs(m_driverController.getRightX()) > 0.1));
     m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
+    m_autoAlignCanceled.onTrue(Commands.runOnce(() -> m_isLocked = false));
   }
 
   /**
@@ -265,7 +285,7 @@ public class RobotContainer {
     // Spin Intake
     m_operatorController
         .rightBumper()
-        .toggleOnTrue(
+        .whileTrue(
             new ParallelCommandGroup(
                 Commands.run(
                     () -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER), m_intake),
@@ -274,7 +294,7 @@ public class RobotContainer {
     // Spin Intake Reverse
     m_operatorController
         .leftBumper()
-        .toggleOnTrue(
+        .whileTrue(
             new ParallelCommandGroup(
                 Commands.run(() -> m_intake.runSpinner(-0.9), m_intake),
                 Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE_REVERSE))));

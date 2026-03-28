@@ -138,6 +138,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
 
   private final NetworkTable m_poseTable = m_stateTable.getSubTable("Poses");
 
+  private final NetworkTable m_driveTemps = m_stateTable.getSubTable("Drive Temperatures");
+
   /** Logs the front bot pose estimate to AdvantageScope. */
   private final StructPublisher<Pose2d> m_frontPoseEstimatePub =
       m_poseTable.getStructTopic("Front Pose Estimate", Pose2d.struct).publish();

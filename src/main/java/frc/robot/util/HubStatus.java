@@ -97,7 +97,7 @@ public class HubStatus {
       if (matchTime <= shiftWindows[i][0] && matchTime > shiftWindows[i][1]) {
         // Return time to the next window's start, or 0 if this is the last one
         if (i + 1 < shiftWindows.length) {
-          return shiftWindows[i + 1][0] - matchTime;
+          return Math.abs(shiftWindows[i + 1][0] - matchTime);
         } else {
           return matchTime; // Past all shifts
         }
