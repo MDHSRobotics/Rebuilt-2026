@@ -28,9 +28,9 @@ public class HopperConstants extends SubsystemBase {
   public static final double SHOOT_POWER = .5;
 
   public enum HopperPowers {
-    SHOOT(0.8),
+    SHOOT(0.6),
     INTAKE(0.4),
-    INTAKE_REVERSE(-0.8);
+    INTAKE_REVERSE(-0.6);
 
     public final double power;
 

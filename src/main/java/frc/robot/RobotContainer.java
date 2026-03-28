@@ -129,7 +129,10 @@ public class RobotContainer {
     NamedCommands.registerCommand(
         "Ramp Up Shooter", Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(1));
     NamedCommands.registerCommand(
-        "Shoot Balls", Commands.run(() -> m_shooter.shootBall(), m_shooter).withTimeout(0.5));
+        "Shoot Balls",
+        new ParallelCommandGroup(
+            Commands.run(() -> m_shooter.shootBall(), m_shooter).withTimeout(6),
+            Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper).withTimeout(6)));
     NamedCommands.registerCommand(
         "Deploy Intake", Commands.run(() -> m_intake.runMotors(0.5, 0.5), m_intake).withTimeout(1));
     NamedCommands.registerCommand(
@@ -285,10 +288,10 @@ public class RobotContainer {
 
     // Change Shooter Trim
     // m_operatorController.povLeft().onTrue(new InstantCommand(() -> changeTestRpm(-50)));
-    m_operatorController.povRight().onTrue(new InstantCommand(() -> m_shooter.changeTrim(50)));
+    m_operatorController.povRight().onTrue(new InstantCommand(() -> m_shooter.changeTrim(100)));
 
     // m_operatorController.povRight().onTrue(new InstantCommand(() -> changeTestRpm(50)));
-    m_operatorController.povLeft().onTrue(new InstantCommand(() -> m_shooter.changeTrim(-50)));
+    m_operatorController.povLeft().onTrue(new InstantCommand(() -> m_shooter.changeTrim(-100)));
   }
 
   public Command getAutonomousCommand() {
