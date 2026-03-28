@@ -142,6 +142,18 @@ public class RobotContainer {
         "Intake Balls",
         Commands.run(() -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER), m_intake)
             .withTimeout(4));
+    NamedCommands.registerCommand(
+        "Lock on to Hub",
+        m_drivetrain
+            .applyRequest(
+                () ->
+                    m_drive
+                        .withVelocityX(0)
+                        .withVelocityY(0)
+                        .withRotationalRate(
+                            m_shooter.getYawRotationalRate()
+                                * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
+            .withTimeout(2));
   }
 
   private void setDefaultCommands() {
