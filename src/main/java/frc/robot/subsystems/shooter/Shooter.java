@@ -92,7 +92,7 @@ public class Shooter extends SubsystemBase implements Testable {
   private double m_currentDistance = 0;
   private double m_lastDistance = 0;
 
-  private double m_shooterTrim = 0;
+  private double m_shooterTrim = 50;
   private boolean m_tagIsSeen = false;
 
   SparkFlexConfig shooterLeftMotorConfig;
@@ -141,7 +141,7 @@ public class Shooter extends SubsystemBase implements Testable {
   @Override
   public void periodic() {
     /* Logging */
-    m_leftTargetVelocityPub.set(m_leftTargetVelocity);
+    m_leftTargetVelocityPub.set(m_leftTargetVelocity + m_shooterTrim);
     m_leftCurrentVelocityPub.set(m_leftShooterMotorEncoder.getVelocity());
     m_rightTargetVelocityPub.set(m_rightTargetVelocity);
     m_rightCurrentVelocityPub.set(m_rightShooterMotorEncoder.getVelocity());
@@ -187,7 +187,7 @@ public class Shooter extends SubsystemBase implements Testable {
   }
 
   public void shootBall(double rpm) {
-    setLeftSetpoint(rpm);
+    rampUpShooter(rpm);
     m_kickerMotor.set(ShooterConstants.KICKER_SPEED);
   }
 
@@ -207,6 +207,12 @@ public class Shooter extends SubsystemBase implements Testable {
 
   public void rampUpShooter() {
     double targetRPM = Aiming.calculateShooterRPM(polynomial, m_currentDistance, tid.getDouble(0));
+    targetRPM += m_shooterTrim;
+    setLeftSetpoint(targetRPM);
+  }
+
+  public void rampUpShooter(double rpm) {
+    double targetRPM = rpm;
     targetRPM += m_shooterTrim;
     setLeftSetpoint(targetRPM);
   }
