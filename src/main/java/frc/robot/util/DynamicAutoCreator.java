@@ -1,15 +1,23 @@
 package frc.robot.util;
 
+import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
+import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FlippingUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
+import frc.robot.subsystems.hopper.Hopper;
+import frc.robot.subsystems.hopper.HopperConstants.HopperPowers;
 import frc.robot.subsystems.shooter.Shooter;
 import java.util.function.Consumer;
 
@@ -29,10 +37,20 @@ public class DynamicAutoCreator {
 
   // Subsystems
   private final Shooter m_shooter;
+  private final Hopper m_hopper;
+  public final CommandSwerveDrivetrain m_drivetrain;
+  private final SwerveRequest.FieldCentric m_drive =
+      new SwerveRequest.FieldCentric().withDriveRequestType(DriveRequestType.OpenLoopVoltage);
 
-  public DynamicAutoCreator(Consumer<Pose2d> odometryResetter, Shooter shooter) {
+  public DynamicAutoCreator(
+      Consumer<Pose2d> odometryResetter,
+      Shooter shooter,
+      Hopper hopper,
+      CommandSwerveDrivetrain drivetrain) {
     m_odometryResetter = odometryResetter;
     m_shooter = shooter;
+    m_hopper = hopper;
+    m_drivetrain = drivetrain;
   }
 
   /*
@@ -96,6 +114,29 @@ public class DynamicAutoCreator {
       m_dynamicAutoSequence = null;
       return;
     }
+  }
+
+  public Command createShootingAutoSequence() {
+    Command auto_command =
+        new SequentialCommandGroup(
+            Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2),
+            new ParallelCommandGroup(
+                Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE), m_hopper),
+                Commands.run(() -> m_shooter.shootBall(), m_shooter).withTimeout(6)));
+    return auto_command;
+  }
+
+  public Command createMiddleShootingAutoSequence() {
+    final var idle = new SwerveRequest.Idle();
+    Command auto_command =
+        new SequentialCommandGroup(
+            m_drivetrain.runOnce(() -> m_drivetrain.seedFieldCentric(Rotation2d.kZero)),
+            m_drivetrain
+                .applyRequest(() -> m_drive.withVelocityX(1).withVelocityY(0).withRotationalRate(0))
+                .withTimeout(1.5),
+            m_drivetrain.applyRequest(() -> idle).withTimeout(0.5),
+            createShootingAutoSequence());
+    return auto_command;
   }
 
   public Command resetOdometryCommand(Pose2d startingPose) {

@@ -9,6 +9,7 @@ import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
@@ -40,7 +41,6 @@ import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
 import java.util.ArrayList;
 import java.util.List;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 
 public class RobotContainer {
   // Robot Speed from 0% to 100%
@@ -64,6 +64,7 @@ public class RobotContainer {
   private final Shooter m_shooter = new Shooter();
   private final Intake m_intake = new Intake();
   private final Hopper m_hopper = new Hopper();
+  private final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
 
   // Autonomous Chooser - A set of options for specifying the active autonomous command from a
   // dashboard like Elastic
@@ -71,7 +72,7 @@ public class RobotContainer {
 
   /* Autonomous Creator - This dynamically creates commands based on settings in the Elastic Auto tab */
   private final DynamicAutoCreator m_dynamicAutoCreator =
-      new DynamicAutoCreator(this::resetFieldPosition, m_shooter);
+      new DynamicAutoCreator(this::resetFieldPosition, m_shooter, m_hopper, m_drivetrain);
 
   private final DriveTelemetry m_logger = new DriveTelemetry(DriveConstants.MAX_LINEAR_SPEED);
 
@@ -85,8 +86,6 @@ public class RobotContainer {
   private final SlewRateLimiter m_xLimiter = new SlewRateLimiter(2.5);
   private final SlewRateLimiter m_yLimiter = new SlewRateLimiter(2.5);
   private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3.0);
-
-  public final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
 
   private final List<Testable> testableSubsystems = List.of(m_intake, m_hopper, m_shooter);
 
@@ -118,6 +117,10 @@ public class RobotContainer {
     // Explicitly add any other auto commands
     m_staticAutoChooser.addOption("------------------------", Commands.none());
     m_staticAutoChooser.addOption("Print Test", new RunCommand(() -> System.out.println("Test")));
+    m_staticAutoChooser.addOption(
+        "Shooting only", m_dynamicAutoCreator.createShootingAutoSequence());
+    m_staticAutoChooser.addOption(
+        "Middle Shooting", m_dynamicAutoCreator.createMiddleShootingAutoSequence());
 
     // Publish the auto command chooser to the dashboard
     SmartDashboard.putData("Static auto commands", m_staticAutoChooser);
