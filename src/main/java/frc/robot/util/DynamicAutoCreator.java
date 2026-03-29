@@ -119,7 +119,7 @@ public class DynamicAutoCreator {
   public Command createShootingAutoSequence() {
     Command auto_command =
         new SequentialCommandGroup(
-            Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2),
+            Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(4),
             new ParallelCommandGroup(
                 Commands.run(() -> m_hopper.runHopper(HopperPowers.INTAKE), m_hopper),
                 Commands.run(() -> m_shooter.shootBall(), m_shooter).withTimeout(6)));

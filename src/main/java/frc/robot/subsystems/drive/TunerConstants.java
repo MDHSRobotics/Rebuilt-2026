@@ -61,29 +61,26 @@ public class TunerConstants {
   // cannot be null.
   // Some configs will be overwritten; check the `with*InitialConfigs()` API
   // documentation.
-private static final TalonFXConfiguration driveInitialConfigs =
-    new TalonFXConfiguration()
-        .withCurrentLimits(
-            new CurrentLimitsConfigs()
-                .withStatorCurrentLimit(Amps.of(65))
-                .withStatorCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(Amps.of(45))
-                .withSupplyCurrentLimitEnable(true))
-        .withOpenLoopRamps(
-            new OpenLoopRampsConfigs()
-                .withDutyCycleOpenLoopRampPeriod(0.25))
-        .withClosedLoopRamps(
-            new ClosedLoopRampsConfigs()
-                .withDutyCycleClosedLoopRampPeriod(0.25));
+  private static final TalonFXConfiguration driveInitialConfigs =
+      new TalonFXConfiguration()
+          .withCurrentLimits(
+              new CurrentLimitsConfigs()
+                  .withStatorCurrentLimit(Amps.of(50))
+                  .withStatorCurrentLimitEnable(true)
+                  .withSupplyCurrentLimit(Amps.of(45))
+                  .withSupplyCurrentLimitEnable(true))
+          .withOpenLoopRamps(new OpenLoopRampsConfigs().withDutyCycleOpenLoopRampPeriod(0.25))
+          .withClosedLoopRamps(
+              new ClosedLoopRampsConfigs().withDutyCycleClosedLoopRampPeriod(0.25));
 
-private static final TalonFXConfiguration steerInitialConfigs =
-    new TalonFXConfiguration()
-        .withCurrentLimits(
-            new CurrentLimitsConfigs()
-                .withStatorCurrentLimit(Amps.of(35))
-                .withStatorCurrentLimitEnable(true)
-                .withSupplyCurrentLimit(Amps.of(25))
-                .withSupplyCurrentLimitEnable(true));
+  private static final TalonFXConfiguration steerInitialConfigs =
+      new TalonFXConfiguration()
+          .withCurrentLimits(
+              new CurrentLimitsConfigs()
+                  .withStatorCurrentLimit(Amps.of(35))
+                  .withStatorCurrentLimitEnable(true)
+                  .withSupplyCurrentLimit(Amps.of(25))
+                  .withSupplyCurrentLimitEnable(true));
   private static final CANcoderConfiguration encoderInitialConfigs = new CANcoderConfiguration();
   // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs
   private static final Pigeon2Configuration pigeonConfigs = null;

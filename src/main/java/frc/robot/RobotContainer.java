@@ -13,6 +13,8 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
+import edu.wpi.first.wpilibj.PowerDistribution;
+import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -94,9 +96,10 @@ public class RobotContainer {
       new Trigger(() -> Math.abs(m_driverController.getRightX()) > 0.1);
 
   // Power Distribution Hub
-  // private final PowerDistribution m_pdh = new PowerDistribution(1, ModuleType.kRev);
+  private final PowerDistribution m_pdh = new PowerDistribution(1, ModuleType.kRev);
 
   public RobotContainer() {
+    SmartDashboard.putData("PDH", m_pdh);
     setDefaultCommands();
     configureDriverControllers();
     configureOperatorControllers();
