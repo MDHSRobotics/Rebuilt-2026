@@ -389,7 +389,7 @@ public class RobotContainer {
   /** Update dashboard outputs. */
   public void updateDashboardOutputs() {
     SmartDashboard.putBoolean("Hub Active", HubStatus.isHubActive());
-    SmartDashboard.putBoolean("Locked on to Apriltag", m_isLocked);
+    SmartDashboard.putBoolean("Locked on to Hub", m_isLocked);
     SmartDashboard.putNumber("Time to Next Shift", HubStatus.timeToNextShift());
   }
 

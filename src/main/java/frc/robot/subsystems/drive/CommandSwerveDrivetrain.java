@@ -260,7 +260,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
                       new ChassisSpeeds(
                           -speeds.vxMetersPerSecond,
                           speeds.vyMetersPerSecond,
-                          speeds.omegaRadiansPerSecond))
+                          -speeds.omegaRadiansPerSecond))
                   .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                   .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons()));
         },

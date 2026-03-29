@@ -13,12 +13,6 @@
         {
           "type": "named",
           "data": {
-            "name": "Lock on to Hub"
-          }
-        },
-        {
-          "type": "named",
-          "data": {
             "name": "Ramp Up Shooter"
           }
         },
