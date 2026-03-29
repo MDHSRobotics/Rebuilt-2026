@@ -40,6 +40,7 @@ import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
 import java.util.ArrayList;
 import java.util.List;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 
 public class RobotContainer {
   // Robot Speed from 0% to 100%
@@ -79,6 +80,11 @@ public class RobotContainer {
       new CommandPS4Controller(ControllerConstants.DRIVER_CONTROLLER_PORT);
   private final CommandXboxController m_operatorController =
       new CommandXboxController(ControllerConstants.OPERATOR_CONTROLLER_PORT);
+
+  // Limiters for smoother controller input
+  private final SlewRateLimiter m_xLimiter = new SlewRateLimiter(2.5);
+  private final SlewRateLimiter m_yLimiter = new SlewRateLimiter(2.5);
+  private final SlewRateLimiter m_rotLimiter = new SlewRateLimiter(3.0);
 
   public final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
 
@@ -361,17 +367,21 @@ public class RobotContainer {
   }
 
   public double getVelocityX() {
-    return m_driverController.getLeftY() * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
+    double input = m_driverController.getLeftY();
+    double limited = m_xLimiter.calculate(input);
+    return limited * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
   }
 
   public double getVelocityY() {
-    return m_driverController.getLeftX() * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
+    double input = m_driverController.getLeftX();
+    double limited = m_yLimiter.calculate(input);
+    return limited * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
   }
 
   public double getRotationalRate() {
-    return -m_driverController.getRightX()
-        * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY
-        * m_robotSpeed;
+    double input = -m_driverController.getRightX();
+    double limited = m_rotLimiter.calculate(input);
+    return limited * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY * m_robotSpeed;
   }
 
   public void resetFieldPosition(Pose2d position) {
