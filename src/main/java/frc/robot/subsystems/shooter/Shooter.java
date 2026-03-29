@@ -69,7 +69,7 @@ public class Shooter extends SubsystemBase implements Testable {
       m_table.getDoubleTopic("TX Adjustment").publish();
 
   private final NetworkTableEntry m_kickerMotorOk =
-      m_inst.getTable("Test").getEntry("IntakeSpinnerMotorRPM_OK");
+      m_inst.getTable("Test").getEntry("KickerMotorRPM_OK");
   private final NetworkTableEntry m_leftMotorOk =
       m_inst.getTable("Test").getEntry("ShooterLeftMotorRPM_OK");
   private final NetworkTableEntry m_rightMotorOk =
@@ -213,7 +213,6 @@ public class Shooter extends SubsystemBase implements Testable {
 
   public void rampUpShooter(double rpm) {
     double targetRPM = rpm;
-    targetRPM += m_shooterTrim;
     setLeftSetpoint(targetRPM);
   }
 

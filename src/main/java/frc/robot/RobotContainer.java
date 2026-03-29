@@ -36,6 +36,7 @@ import frc.robot.subsystems.hopper.HopperConstants.HopperPowers;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
+import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.util.DynamicAutoCreator;
 import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
@@ -91,6 +92,9 @@ public class RobotContainer {
 
   private Trigger m_autoAlignCanceled =
       new Trigger(() -> Math.abs(m_driverController.getRightX()) > 0.1);
+
+  // Power Distribution Hub
+  // private final PowerDistribution m_pdh = new PowerDistribution(1, ModuleType.kRev);
 
   public RobotContainer() {
     setDefaultCommands();
@@ -228,6 +232,16 @@ public class RobotContainer {
 
     // Reset the field-centric heading on option press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
+
+    m_driverController
+        .circle()
+        .whileTrue(
+            new SequentialCommandGroup(
+                Commands.run(() -> m_shooter.rampUpShooter(ShooterConstants.RPMS[2]), m_shooter)
+                    .withTimeout(2),
+                new ParallelCommandGroup(
+                    Commands.run(() -> m_shooter.shootBall(ShooterConstants.RPMS[2]), m_shooter),
+                    Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper))));
 
     // Shoot Ball
     m_driverController
