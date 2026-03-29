@@ -67,7 +67,7 @@ public class TunerConstants {
               new CurrentLimitsConfigs()
                   .withStatorCurrentLimit(Amps.of(50))
                   .withStatorCurrentLimitEnable(true)
-                  .withSupplyCurrentLimit(Amps.of(45))
+                  .withSupplyCurrentLimit(Amps.of(35))
                   .withSupplyCurrentLimitEnable(true))
           .withOpenLoopRamps(new OpenLoopRampsConfigs().withDutyCycleOpenLoopRampPeriod(0.25))
           .withClosedLoopRamps(
