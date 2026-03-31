@@ -13,8 +13,6 @@ import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
-import edu.wpi.first.wpilibj.PowerDistribution;
-import edu.wpi.first.wpilibj.PowerDistribution.ModuleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -40,6 +38,7 @@ import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.util.DynamicAutoCreator;
+import frc.robot.util.EnergyMonitor;
 import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
 import java.util.ArrayList;
@@ -96,10 +95,9 @@ public class RobotContainer {
       new Trigger(() -> Math.abs(m_driverController.getRightX()) > 0.1);
 
   // Power Distribution Hub
-  private final PowerDistribution m_pdh = new PowerDistribution(1, ModuleType.kRev);
+  public EnergyMonitor energyMonitor = new EnergyMonitor();
 
   public RobotContainer() {
-    SmartDashboard.putData("PDH", m_pdh);
     setDefaultCommands();
     configureDriverControllers();
     configureOperatorControllers();
@@ -421,6 +419,7 @@ public class RobotContainer {
     SmartDashboard.putBoolean("Hub Active", HubStatus.isHubActive());
     SmartDashboard.putBoolean("Locked on to Hub", m_isLocked);
     SmartDashboard.putNumber("Time to Next Shift", HubStatus.timeToNextShift());
+    energyMonitor.update();
   }
 
   public Command buildFullTestSequence() {
