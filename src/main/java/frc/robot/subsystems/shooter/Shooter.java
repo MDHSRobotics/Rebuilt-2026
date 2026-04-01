@@ -10,7 +10,6 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -70,13 +69,6 @@ public class Shooter extends SubsystemBase implements Testable {
       m_table.getDoubleTopic("Distance From Robot to AprilTag ").publish();
   private final DoublePublisher m_txAdjustmentPub =
       m_table.getDoubleTopic("TX Adjustment").publish();
-
-  private final NetworkTableEntry m_kickerMotorOk =
-      m_inst.getTable("Test").getEntry("KickerMotorRPM_OK");
-  private final NetworkTableEntry m_leftMotorOk =
-      m_inst.getTable("Test").getEntry("ShooterLeftMotorRPM_OK");
-  private final NetworkTableEntry m_rightMotorOk =
-      m_inst.getTable("Test").getEntry("ShooterRightMotorRPM_OK");
 
   private final LoggedTunableNumber kP =
       new LoggedTunableNumber("Shooter/kP", ShooterConstants.K_P_SHOOTER);
@@ -209,7 +201,7 @@ public class Shooter extends SubsystemBase implements Testable {
                 () -> {
                   m_kickerMotor.set(ShooterConstants.TEST_POWER);
                   double rpm = m_kickerMotor.getVelocity();
-                  m_kickerMotorOk.setBoolean(rpm > ShooterConstants.TEST_RPM);
+                  m_kickerMotor.setTestResult(rpm > ShooterConstants.TEST_RPM);
                 },
                 this)
             .withTimeout(ShooterConstants.TEST_TIMEOUT),
@@ -217,7 +209,7 @@ public class Shooter extends SubsystemBase implements Testable {
                 () -> {
                   m_kickerMotor.stopMotor();
                   ;
-                  m_kickerMotorOk.setBoolean(Math.abs(m_kickerMotor.getVelocity()) < 5);
+                  m_kickerMotor.setTestResult(Math.abs(m_kickerMotor.getVelocity()) < 5);
                 },
                 this)
             .withTimeout(ShooterConstants.TEST_TIMEOUT),
@@ -225,7 +217,7 @@ public class Shooter extends SubsystemBase implements Testable {
         Commands.run(
                 () -> {
                   m_shooterLeftMotor.setVelocity(ShooterConstants.TEST_RPM_2);
-                  m_leftMotorOk.setBoolean(
+                  m_shooterLeftMotor.setTestResult(
                       epsilonEquals(
                           m_shooterLeftMotor.getVelocity(), ShooterConstants.TEST_RPM_2, 200));
                 },
@@ -234,15 +226,15 @@ public class Shooter extends SubsystemBase implements Testable {
         Commands.run(
                 () -> {
                   m_shooterLeftMotor.setVelocity(0);
-                  m_leftMotorOk.setBoolean(Math.abs(m_shooterLeftMotor.getVelocity()) < 5);
+                  m_shooterLeftMotor.setTestResult(Math.abs(m_shooterLeftMotor.getVelocity()) < 5);
                 },
                 this)
             .withTimeout(ShooterConstants.TEST_TIMEOUT));
   }
 
   public void resetTestIndicators() {
-    m_kickerMotorOk.setBoolean(false);
-    m_leftMotorOk.setBoolean(false);
-    m_rightMotorOk.setBoolean(false);
+    m_kickerMotor.resetTestResult();
+    m_shooterLeftMotor.resetTestResult();
+    m_shooterRightMotor.resetTestResult();
   }
 }

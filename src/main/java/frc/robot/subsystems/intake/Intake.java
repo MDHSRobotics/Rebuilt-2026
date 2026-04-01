@@ -7,7 +7,6 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -53,14 +52,6 @@ public class Intake extends SubsystemBase implements Testable {
           LoggedValue.VELOCITY,
           LoggedValue.CURRENT,
           LoggedValue.OUTPUT_VOLTAGE);
-
-  /* Networktables Publishers */
-  private final NetworkTableEntry m_spinnerMotorOk =
-      m_inst.getTable("Test").getEntry("IntakeSpinnerMotorRPM_OK");
-  private final NetworkTableEntry m_leftMotorOk =
-      m_inst.getTable("Test").getEntry("IntakeLeftMotorRPM_OK");
-  private final NetworkTableEntry m_rightMotorOk =
-      m_inst.getTable("Test").getEntry("IntakeRightMotorRPM_OK");
 
   private boolean deployed = false;
 
@@ -149,22 +140,22 @@ public class Intake extends SubsystemBase implements Testable {
                 () -> {
                   m_spinnerMotor.set(IntakeConstants.TEST_POWER);
                   double rpm = m_spinnerMotor.getVelocity();
-                  m_spinnerMotorOk.setBoolean(rpm > IntakeConstants.TEST_RPM);
+                  m_spinnerMotor.setTestResult(rpm > IntakeConstants.TEST_RPM);
                 },
                 this)
             .withTimeout(IntakeConstants.TEST_TIMEOUT),
         Commands.run(
                 () -> {
                   m_spinnerMotor.set(0.0);
-                  m_spinnerMotorOk.setBoolean(Math.abs(m_spinnerMotor.getVelocity()) < 5);
+                  m_spinnerMotor.setTestResult(Math.abs(m_spinnerMotor.getVelocity()) < 5);
                 },
                 this)
             .withTimeout(IntakeConstants.TEST_TIMEOUT));
   }
 
   public void resetTestIndicators() {
-    m_spinnerMotorOk.setBoolean(false);
-    m_leftMotorOk.setBoolean(false);
-    m_rightMotorOk.setBoolean(false);
+    m_spinnerMotor.resetTestResult();
+    m_intakeLeftMotor.resetTestResult();
+    m_intakeRightMotor.resetTestResult();
   }
 }

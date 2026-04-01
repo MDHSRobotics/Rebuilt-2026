@@ -9,7 +9,6 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -34,9 +33,6 @@ public class Hopper extends SubsystemBase implements Testable {
           LoggedValue.VELOCITY,
           LoggedValue.CURRENT,
           LoggedValue.OUTPUT_VOLTAGE);
-
-  private final NetworkTableEntry m_hopperMotorOk =
-      m_inst.getTable("Test").getEntry("HopperMotorRPM_OK");
 
   public Hopper() {
     SparkFlexConfig m_hopperConfig = new SparkFlexConfig();
@@ -63,20 +59,20 @@ public class Hopper extends SubsystemBase implements Testable {
                 () -> {
                   m_hopperMotor.set(HopperConstants.TEST_POWER);
                   double rpm = m_hopperMotor.getVelocity();
-                  m_hopperMotorOk.setBoolean(rpm > HopperConstants.TEST_RPM);
+                  m_hopperMotor.setTestResult(rpm > HopperConstants.TEST_RPM);
                 },
                 this)
             .withTimeout(HopperConstants.TEST_TIMEOUT),
         Commands.run(
                 () -> {
                   m_hopperMotor.set(0.0);
-                  m_hopperMotorOk.setBoolean(epsilonEquals(m_hopperMotor.getVelocity(), 0.0, 5.0));
+                  m_hopperMotor.setTestResult(epsilonEquals(m_hopperMotor.getVelocity(), 0.0, 5.0));
                 },
                 this)
             .withTimeout(HopperConstants.TEST_TIMEOUT));
   }
 
   public void resetTestIndicators() {
-    m_hopperMotorOk.setBoolean(false);
+    m_hopperMotor.resetTestResult();
   }
 }

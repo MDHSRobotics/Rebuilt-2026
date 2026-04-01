@@ -4,8 +4,10 @@ import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
+import edu.wpi.first.networktables.BooleanPublisher;
 import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -30,6 +32,10 @@ import java.util.Set;
  *
  * // Setting a velocity setpoint — also updates the target publisher automatically:
  * m_shooterMotor.setVelocity(3000);
+ *
+ * // In a test command:
+ * m_shooterMotor.setTestResult(rpm > ShooterConstants.TEST_RPM);
+ * m_shooterMotor.resetTestResult(); // back to false between tests
  * }</pre>
  */
 public class LoggableSparkFlex extends SparkFlex {
@@ -74,6 +80,9 @@ public class LoggableSparkFlex extends SparkFlex {
   private DoublePublisher temperaturePub;
   private DoublePublisher outputVoltagePub;
 
+  // Test result — always created, lives under Test/<motorName>_OK
+  private final BooleanPublisher testResultPub;
+
   // Tracked setpoints so we can publish them
   private double targetVelocity = 0;
   private double targetPosition = 0;
@@ -111,7 +120,7 @@ public class LoggableSparkFlex extends SparkFlex {
             ? EnumSet.copyOf(List.of(valuesToLog))
             : EnumSet.noneOf(LoggedValue.class);
 
-    // Create only the publishers we actually need
+    // Motor data lives under the subsystem table e.g. Shooter/Left Motor/
     NetworkTable table = parentTable.getSubTable(motorName);
 
     if (logs(LoggedValue.VELOCITY)) {
@@ -131,6 +140,14 @@ public class LoggableSparkFlex extends SparkFlex {
     if (logs(LoggedValue.OUTPUT_VOLTAGE)) {
       outputVoltagePub = table.getDoubleTopic("Output Voltage").publish();
     }
+
+    // Test result lives under Test/<motorName>_OK — always created
+    testResultPub =
+        NetworkTableInstance.getDefault()
+            .getTable("Test")
+            .getBooleanTopic(motorName + "_OK")
+            .publish();
+    testResultPub.set(false);
 
     instances.add(this);
   }
@@ -155,7 +172,7 @@ public class LoggableSparkFlex extends SparkFlex {
     controller.setSetpoint(rotations, ControlType.kPosition);
   }
 
-  // ── Getter Methods ────────────────────────────────────────────────────────
+  // ── Getter methods ────────────────────────────────────────────────────────
 
   public double getVelocity() {
     return absoluteEncoder != null ? absoluteEncoder.getVelocity() : relativeEncoder.getVelocity();
@@ -163,6 +180,18 @@ public class LoggableSparkFlex extends SparkFlex {
 
   public double getPosition() {
     return absoluteEncoder != null ? absoluteEncoder.getPosition() : relativeEncoder.getPosition();
+  }
+
+  // ── Test result methods ───────────────────────────────────────────────────
+
+  /** Publish a pass/fail result for this motor to the Test table. */
+  public void setTestResult(boolean passed) {
+    testResultPub.set(passed);
+  }
+
+  /** Reset this motor's test result back to false. Call from resetTestIndicators(). */
+  public void resetTestResult() {
+    testResultPub.set(false);
   }
 
   // ── Internal ──────────────────────────────────────────────────────────────
