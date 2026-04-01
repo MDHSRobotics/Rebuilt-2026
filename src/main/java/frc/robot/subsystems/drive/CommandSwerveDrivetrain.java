@@ -73,6 +73,8 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
       new SwerveRequest.SysIdSwerveSteerGains();
   private final SwerveRequest.SysIdSwerveRotation m_rotationCharacterization =
       new SwerveRequest.SysIdSwerveRotation();
+  private final SwerveRequest.SysIdSwerveTranslation m_slipCurrentCharacterization =
+      new SwerveRequest.SysIdSwerveTranslation();
 
   /* SysId routine for characterizing translation. This is used to find PID gains for the drive motors. */
   private final SysIdRoutine m_sysIdRoutineTranslation =
@@ -123,8 +125,23 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               null,
               this));
 
+  /**
+   * Sysid routine for charaterizing slip current. You must log the data yourself while the test is
+   * running.
+   */
+  private final SysIdRoutine m_sysIdRoutineSlipCurrent =
+      new SysIdRoutine(
+          new SysIdRoutine.Config(
+              Volts.of(0.1).per(Second),
+              Volts.of(0),
+              null // Use default timeout (10s)
+              ,
+              state -> {}),
+          new SysIdRoutine.Mechanism(
+              output -> setControl(m_slipCurrentCharacterization.withVolts(output)), null, this));
+
   /* The SysId routine to test */
-  private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineTranslation;
+  private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSlipCurrent;
 
   /*Networktables for logging */
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
@@ -247,20 +264,13 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
     AutoBuilder.configure(
         () -> getState().Pose, // Supplier of current robot pose
         this::resetPose, // Consumer for seeding pose against auto
-        () ->
-            ChassisSpeeds.fromFieldRelativeSpeeds(
-                getState().Speeds,
-                getState().Pose.getRotation()), // Supplier of current robot speeds
+        () -> getState().Speeds, // Supplier of current robot speeds
         // Consumer of ChassisSpeeds and feedforwards to drive the robot
         (speeds, feedforwards) -> {
           ;
           setControl(
               m_pathApplyRobotSpeeds
-                  .withSpeeds(
-                      new ChassisSpeeds(
-                          -speeds.vxMetersPerSecond,
-                          speeds.vyMetersPerSecond,
-                          -speeds.omegaRadiansPerSecond))
+                  .withSpeeds(speeds)
                   .withWheelForceFeedforwardsX(feedforwards.robotRelativeForcesXNewtons())
                   .withWheelForceFeedforwardsY(feedforwards.robotRelativeForcesYNewtons()));
         },

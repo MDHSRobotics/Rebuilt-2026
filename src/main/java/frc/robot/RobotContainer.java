@@ -27,6 +27,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.commands.AimingCommand;
 import frc.robot.subsystems.drive.CommandSwerveDrivetrain;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.drive.DriveTelemetry;
@@ -67,6 +68,9 @@ public class RobotContainer {
   private final Intake m_intake = new Intake();
   private final Hopper m_hopper = new Hopper();
   private final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
+  private final AimingCommand m_AimingCommand =
+      new AimingCommand(
+          m_drivetrain, () -> getVelocityX(), () -> getVelocityY(), () -> getDeadband());
 
   // Autonomous Chooser - A set of options for specifying the active autonomous command from a
   // dashboard like Elastic
@@ -278,6 +282,9 @@ public class RobotContainer {
                 .until(() -> Math.abs(m_driverController.getRightX()) > 0.1));
     m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
     m_autoAlignCanceled.onTrue(Commands.runOnce(() -> m_isLocked = false));
+
+    // Face the Hub
+    m_driverController.square().whileTrue(m_AimingCommand.alignWithHub());
   }
 
   /**

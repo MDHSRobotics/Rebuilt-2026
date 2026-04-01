@@ -56,7 +56,7 @@ public class DriveConstants {
       RotationsPerSecond.of(MAX_LINEAR_SPEED / CENTER_OF_ROBOT_TO_CANCODER_DISTANCE.in(Meters))
           .in(RadiansPerSecond);
 
-  public static final double MAX_TELEOP_ANGULAR_VELOCITY = 2.5 * Math.PI; // rad/s
+  public static final double MAX_TELEOP_ANGULAR_VELOCITY = 8.77; // rad/s
 
   /**
    * Constraints for the <a
