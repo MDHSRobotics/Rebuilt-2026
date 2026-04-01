@@ -39,9 +39,9 @@ import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.util.DynamicAutoCreator;
-import frc.robot.util.EnergyMonitor;
 import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
+import frc.robot.util.logging.EnergyMonitor;
 import java.util.ArrayList;
 import java.util.List;
 
