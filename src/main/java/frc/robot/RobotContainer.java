@@ -39,9 +39,9 @@ import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.util.DynamicAutoCreator;
-import frc.robot.util.EnergyMonitor;
 import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
+import frc.robot.util.logging.EnergyMonitor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -279,8 +279,8 @@ public class RobotContainer {
                             .withRotationalRate(
                                 m_shooter.getYawRotationalRate()
                                     * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
-                .until(() -> Math.abs(m_driverController.getRightX()) > 0.1));
-    m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
+                .until(m_autoAlignCanceled));
+    m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = true));
     m_autoAlignCanceled.onTrue(Commands.runOnce(() -> m_isLocked = false));
 
     // Face the Hub

@@ -1,69 +1,57 @@
 package frc.robot.subsystems.intake;
 
-import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.FeedbackSensor;
-import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.SparkClosedLoopController;
-import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
-import edu.wpi.first.networktables.DoublePublisher;
 import edu.wpi.first.networktables.NetworkTable;
-import edu.wpi.first.networktables.NetworkTableEntry;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.util.Testable;
+import frc.robot.util.logging.LoggableSparkFlex;
+import frc.robot.util.logging.LoggableSparkFlex.EncoderType;
+import frc.robot.util.logging.LoggableSparkFlex.LoggedValue;
 
 public class Intake extends SubsystemBase implements Testable {
-  // Motors
-  private final SparkFlex m_intakeRightMotor =
-      new SparkFlex(IntakeConstants.INTAKE_RIGHT_MOTOR_ID, MotorType.kBrushless);
-  private final SparkFlex m_intakeLeftMotor =
-      new SparkFlex(IntakeConstants.INTAKE_LEFT_MOTOR_ID, MotorType.kBrushless);
-  private final SparkFlex m_spinnerMotor =
-      new SparkFlex(IntakeConstants.INTAKE_SPINNERS_MOTOR_ID, MotorType.kBrushless);
 
-  // PID Controllers
-  private final SparkClosedLoopController m_intakeLeftController =
-      m_intakeLeftMotor.getClosedLoopController();
-  private final SparkClosedLoopController m_intakeRightController =
-      m_intakeRightMotor.getClosedLoopController();
-  private final SparkClosedLoopController m_spinnerController =
-      m_spinnerMotor.getClosedLoopController();
-
-  // Encoders
-  private final AbsoluteEncoder m_intakeLeftEncoder = m_intakeLeftMotor.getAbsoluteEncoder();
-  private final AbsoluteEncoder m_intakeRightEncoder = m_intakeRightMotor.getAbsoluteEncoder();
-  private final RelativeEncoder m_spinnerEncoder = m_spinnerMotor.getEncoder();
-
-  // Networktables data
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
   private final NetworkTable m_table = m_inst.getTable("Intake");
-  private final DoublePublisher m_leftCurrentPositionPub =
-      m_table.getDoubleTopic("Left Intake Current Position ").publish();
-  private final DoublePublisher m_rightCurrentPositionPub =
-      m_table.getDoubleTopic("Right Intake Current Position ").publish();
-  private final DoublePublisher m_leftTargetPositionPub =
-      m_table.getDoubleTopic("Left Target Position (Rotations)").publish();
-  private final DoublePublisher m_rightTargetPositionPub =
-      m_table.getDoubleTopic("Right Target Position (Rotations)").publish();
-  private final DoublePublisher m_spinnerCurrentVelocityPub =
-      m_table.getDoubleTopic("Spinner Motor Velocity ").publish();
-  private final DoublePublisher m_spinnerTargetSpeedPub =
-      m_table.getDoubleTopic("Spinner Target Speed (RPM)").publish();
 
-  private final NetworkTableEntry m_spinnerMotorOk =
-      m_inst.getTable("Test").getEntry("IntakeSpinnerMotorRPM_OK");
-  private final NetworkTableEntry m_leftMotorOk =
-      m_inst.getTable("Test").getEntry("IntakeLeftMotorRPM_OK");
-  private final NetworkTableEntry m_rightMotorOk =
-      m_inst.getTable("Test").getEntry("IntakeRightMotorRPM_OK");
+  // Motors
+  private final LoggableSparkFlex m_intakeRightMotor =
+      new LoggableSparkFlex(
+          IntakeConstants.INTAKE_RIGHT_MOTOR_ID,
+          MotorType.kBrushless,
+          m_table,
+          "Right Arm",
+          EncoderType.RELATIVE,
+          LoggedValue.POSITION,
+          LoggedValue.CURRENT,
+          LoggedValue.OUTPUT_VOLTAGE);
+  private final LoggableSparkFlex m_intakeLeftMotor =
+      new LoggableSparkFlex(
+          IntakeConstants.INTAKE_LEFT_MOTOR_ID,
+          MotorType.kBrushless,
+          m_table,
+          "Left Arm",
+          EncoderType.RELATIVE,
+          LoggedValue.POSITION,
+          LoggedValue.CURRENT,
+          LoggedValue.OUTPUT_VOLTAGE);
+  private final LoggableSparkFlex m_spinnerMotor =
+      new LoggableSparkFlex(
+          IntakeConstants.INTAKE_SPINNERS_MOTOR_ID,
+          MotorType.kBrushless,
+          m_table,
+          "Spinner",
+          EncoderType.RELATIVE,
+          LoggedValue.VELOCITY,
+          LoggedValue.CURRENT,
+          LoggedValue.OUTPUT_VOLTAGE);
 
   private boolean deployed = false;
 
@@ -108,13 +96,7 @@ public class Intake extends SubsystemBase implements Testable {
   }
 
   @Override
-  public void periodic() {
-    /* Logging */
-    m_leftCurrentPositionPub.set(m_intakeLeftEncoder.getPosition());
-    m_rightCurrentPositionPub.set(m_intakeRightEncoder.getPosition());
-    m_spinnerTargetSpeedPub.set(m_spinnerMotor.get());
-    m_spinnerCurrentVelocityPub.set(m_spinnerEncoder.getVelocity());
-  }
+  public void periodic() {}
 
   public void stopMotors() {
     m_intakeRightMotor.stopMotor();
@@ -134,24 +116,14 @@ public class Intake extends SubsystemBase implements Testable {
 
   public void deployedPosition() {
     deployed = true;
-    m_intakeLeftController.setSetpoint(IntakeConstants.PICKUP_POSITION_LEFT, ControlType.kPosition);
-    m_intakeRightController.setSetpoint(
-        IntakeConstants.PICKUP_POSITION_RIGHT, ControlType.kPosition);
-    m_leftCurrentPositionPub.set(m_intakeLeftEncoder.getPosition());
-    m_rightCurrentPositionPub.set(m_intakeRightEncoder.getPosition());
-    m_leftTargetPositionPub.set(IntakeConstants.PICKUP_POSITION_LEFT);
-    m_rightTargetPositionPub.set(IntakeConstants.PICKUP_POSITION_RIGHT);
+    m_intakeLeftMotor.setPosition(IntakeConstants.PICKUP_POSITION_LEFT);
+    m_intakeRightMotor.setPosition(IntakeConstants.PICKUP_POSITION_RIGHT);
   }
 
   public void stowedPosition() {
     deployed = false;
-    m_intakeLeftController.setSetpoint(IntakeConstants.STOWED_POSITION_LEFT, ControlType.kPosition);
-    m_intakeRightController.setSetpoint(
-        IntakeConstants.STOWED_POSITION_RIGHT, ControlType.kPosition);
-    m_leftCurrentPositionPub.set(m_intakeLeftEncoder.getPosition());
-    m_rightCurrentPositionPub.set(m_intakeRightEncoder.getPosition());
-    m_leftTargetPositionPub.set(IntakeConstants.STOWED_POSITION_LEFT);
-    m_rightTargetPositionPub.set(IntakeConstants.STOWED_POSITION_RIGHT);
+    m_intakeLeftMotor.setPosition(IntakeConstants.STOWED_POSITION_LEFT);
+    m_intakeRightMotor.setPosition(IntakeConstants.STOWED_POSITION_RIGHT);
   }
 
   public void stopSpinnerMotors() {
@@ -167,23 +139,23 @@ public class Intake extends SubsystemBase implements Testable {
         Commands.run(
                 () -> {
                   m_spinnerMotor.set(IntakeConstants.TEST_POWER);
-                  double rpm = m_spinnerEncoder.getVelocity();
-                  m_spinnerMotorOk.setBoolean(rpm > IntakeConstants.TEST_RPM);
+                  double rpm = m_spinnerMotor.getVelocity();
+                  m_spinnerMotor.setTestResult(rpm > IntakeConstants.TEST_RPM);
                 },
                 this)
             .withTimeout(IntakeConstants.TEST_TIMEOUT),
         Commands.run(
                 () -> {
                   m_spinnerMotor.set(0.0);
-                  m_spinnerMotorOk.setBoolean(Math.abs(m_spinnerEncoder.getVelocity()) < 5);
+                  m_spinnerMotor.setTestResult(Math.abs(m_spinnerMotor.getVelocity()) < 5);
                 },
                 this)
             .withTimeout(IntakeConstants.TEST_TIMEOUT));
   }
 
   public void resetTestIndicators() {
-    m_spinnerMotorOk.setBoolean(false);
-    m_leftMotorOk.setBoolean(false);
-    m_rightMotorOk.setBoolean(false);
+    m_spinnerMotor.resetTestResult();
+    m_intakeLeftMotor.resetTestResult();
+    m_intakeRightMotor.resetTestResult();
   }
 }

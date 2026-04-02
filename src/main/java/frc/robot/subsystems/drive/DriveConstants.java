@@ -102,7 +102,7 @@ public class DriveConstants {
   public static final PIDConstants ROTATION_PID = new PIDConstants(5.0, 0.0, 0.0);
 
   /** Robot mass with battery and bumpers in kilograms */
-  public static final Mass ROBOT_MASS = Kilograms.of(56.699);
+  public static final Mass ROBOT_MASS = Kilograms.of(58.513);
 
   /**
    * Angular acceleration gain from {@link
@@ -138,7 +138,7 @@ public class DriveConstants {
   //               * CENTER_OF_ROBOT_TO_CANCODER_DISTANCE.in(Meters)
   //               * (K_A_ANGULAR.in(VoltsPerRadianPerSecondSquared)
   //                   / K_A_LINEAR.in(VoltsPerMeterPerSecondSquared)));
-  private static final MomentOfInertia ROBOT_MOI = KilogramSquareMeters.of(4.483);
+  private static final MomentOfInertia ROBOT_MOI = KilogramSquareMeters.of(4.623786);
 
   /**
    * Wheel coefficient of friction for <a

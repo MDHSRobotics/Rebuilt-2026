@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.util.Elastic;
 import frc.robot.util.LimelightHelpers;
+import frc.robot.util.logging.LoggableSparkFlex;
 import org.littletonrobotics.urcl.URCL;
 
 public class Robot extends TimedRobot {
@@ -89,6 +90,7 @@ public class Robot extends TimedRobot {
     m_timeAndJoystickReplay.update();
     CommandScheduler.getInstance().run();
     m_matchTimePub.set(DriverStation.getMatchTime());
+    LoggableSparkFlex.updateAll();
     m_robotContainer.updateDashboardOutputs();
   }
 
