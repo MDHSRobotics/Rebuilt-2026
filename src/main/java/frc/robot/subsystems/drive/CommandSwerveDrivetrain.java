@@ -141,7 +141,7 @@ public class CommandSwerveDrivetrain extends TunerSwerveDrivetrain implements Su
               output -> setControl(m_slipCurrentCharacterization.withVolts(output)), null, this));
 
   /* The SysId routine to test */
-  private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSlipCurrent;
+  private SysIdRoutine m_sysIdRoutineToApply = m_sysIdRoutineSteer;
 
   /*Networktables for logging */
   private final NetworkTableInstance m_inst = NetworkTableInstance.getDefault();
