@@ -24,6 +24,7 @@ public final class Constants {
 
     public static final int DRIVER_CONTROLLER_PORT = 0;
     public static final int OPERATOR_CONTROLLER_PORT = 1;
+    public static final int DRIVER_CONTROLLER_RIGHT_AXIS = 4;
   }
 
   public static class VisionConstants {
@@ -37,7 +38,7 @@ public final class Constants {
     public static final double FRONT_LIMELIGHT_FORWARD_DISTANCE_INCHES = 22.416;
 
     /** Distance from the floor to the front limelight lens in Inches */
-    public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(23.1875).in(Meters);
+    public static final double FRONT_LIMELIGHT_UP_DISTANCE = Inches.of(22.625).in(Meters);
 
     public static final double FRONT_LIMELIGHT_UP_DISTANCE_INCHES = 23.75;
 

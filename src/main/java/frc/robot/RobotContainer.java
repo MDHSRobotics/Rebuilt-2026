@@ -404,7 +404,7 @@ public class RobotContainer {
   }
 
   public double getRotationalRate() {
-    double input = -m_driverController.getRightX();
+    double input = -m_driverController.getRawAxis(ControllerConstants.DRIVER_CONTROLLER_RIGHT_AXIS);
     double limited = m_rotLimiter.calculate(input);
     return limited * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY * m_robotSpeed;
   }
