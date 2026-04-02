@@ -279,7 +279,7 @@ public class RobotContainer {
                             .withRotationalRate(
                                 m_shooter.getYawRotationalRate()
                                     * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
-                .until(() -> Math.abs(m_driverController.getRightX()) > 0.1));
+                .until(m_autoAlignCanceled));
     m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = true));
     m_autoAlignCanceled.onTrue(Commands.runOnce(() -> m_isLocked = false));
 

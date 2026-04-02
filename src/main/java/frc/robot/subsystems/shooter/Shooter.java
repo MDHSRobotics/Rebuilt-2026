@@ -122,8 +122,6 @@ public class Shooter extends SubsystemBase implements Testable {
         .idleMode(IdleMode.kBrake);
     m_kickerMotor.configure(
         kickerMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-
-    SmartDashboard.putBoolean("AprilTag is recognized", m_tagIsSeen);
   }
 
   @Override
@@ -150,6 +148,7 @@ public class Shooter extends SubsystemBase implements Testable {
     }
 
     m_distanceRobotToTagPub.set(m_currentDistance);
+    SmartDashboard.putBoolean("AprilTag is recognized", m_tagIsSeen);
   }
 
   public void runLeftMotor(double power, double kickerPower) {
