@@ -206,26 +206,26 @@ public class RobotContainer {
   private void configureDriverControllers() {
     // Run SysId routines when holding back/start and X/Y.
     // Note that each routine should be run exactly once in a single log.
-    m_driverController
-        .povUp()
-        .whileTrue(
-            m_drivetrain.sysIdDynamic(
-                edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kForward));
-    m_driverController
-        .povDown()
-        .whileTrue(
-            m_drivetrain.sysIdDynamic(
-                edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kReverse));
-    m_driverController
-        .povRight()
-        .whileTrue(
-            m_drivetrain.sysIdQuasistatic(
-                edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kForward));
-    m_driverController
-        .povLeft()
-        .whileTrue(
-            m_drivetrain.sysIdQuasistatic(
-                edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kReverse));
+    // m_driverController
+    //     .povUp()
+    //     .whileTrue(
+    //         m_drivetrain.sysIdDynamic(
+    //             edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kForward));
+    // m_driverController
+    //     .povDown()
+    //     .whileTrue(
+    //         m_drivetrain.sysIdDynamic(
+    //             edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kReverse));
+    // m_driverController
+    //     .povRight()
+    //     .whileTrue(
+    //         m_drivetrain.sysIdQuasistatic(
+    //             edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kForward));
+    // m_driverController
+    //     .povLeft()
+    //     .whileTrue(
+    //         m_drivetrain.sysIdQuasistatic(
+    //             edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kReverse));
 
     // Quarter Speed
     m_driverController.R2().onTrue(Commands.runOnce(() -> m_robotSpeed = 0.25));
@@ -425,6 +425,8 @@ public class RobotContainer {
     SmartDashboard.putBoolean("Hub Active", HubStatus.isHubActive());
     SmartDashboard.putBoolean("Locked on to Hub", m_isLocked);
     SmartDashboard.putNumber("Time to Next Shift", HubStatus.timeToNextShift());
+    SmartDashboard.putString(
+        "CanivoreStatus", TunerConstants.kCANBus.getStatus().Status.toString());
     // energyMonitor.update();
   }
 

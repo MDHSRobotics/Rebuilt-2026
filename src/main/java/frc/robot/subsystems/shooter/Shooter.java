@@ -49,10 +49,7 @@ public class Shooter extends SubsystemBase implements Testable {
           MotorType.kBrushless,
           m_table,
           "Right Shooter",
-          EncoderType.RELATIVE,
-          LoggedValue.VELOCITY,
-          LoggedValue.CURRENT,
-          LoggedValue.OUTPUT_VOLTAGE);
+          EncoderType.RELATIVE);
   private final LoggableSparkFlex m_kickerMotor =
       new LoggableSparkFlex(
           ShooterConstants.KICKER_MOTOR_ID,
@@ -60,9 +57,7 @@ public class Shooter extends SubsystemBase implements Testable {
           m_table,
           "Kicker",
           EncoderType.RELATIVE,
-          LoggedValue.VELOCITY,
-          LoggedValue.CURRENT,
-          LoggedValue.OUTPUT_VOLTAGE);
+          LoggedValue.VELOCITY);
 
   /* Networktables Publishers */
   private final DoublePublisher m_distanceRobotToTagPub =

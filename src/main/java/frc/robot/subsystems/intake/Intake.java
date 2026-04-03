@@ -49,9 +49,7 @@ public class Intake extends SubsystemBase implements Testable {
           m_table,
           "Spinner",
           EncoderType.RELATIVE,
-          LoggedValue.VELOCITY,
-          LoggedValue.CURRENT,
-          LoggedValue.OUTPUT_VOLTAGE);
+          LoggedValue.VELOCITY);
 
   private boolean deployed = false;
 
