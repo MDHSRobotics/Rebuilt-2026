@@ -18,6 +18,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Tracer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.Constants.VisionConstants;
@@ -32,6 +33,8 @@ public class Robot extends TimedRobot {
   private final RobotContainer m_robotContainer;
   private DoublePublisher m_matchTimePub;
   private boolean m_hasAppliedRobotRotation;
+
+  private final Tracer m_tracer = new Tracer();
 
   /* log and replay timestamp and joystick data */
   // private final HootAutoReplay m_timeAndJoystickReplay =
@@ -87,10 +90,16 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     // m_timeAndJoystickReplay.update();
+    m_tracer.clearEpochs();
     CommandScheduler.getInstance().run();
+    m_tracer.addEpoch("Command Scheduling");
     m_matchTimePub.set(DriverStation.getMatchTime());
+    m_tracer.addEpoch("Match Time Logging");
     LoggableSparkFlex.updateAll();
+    m_tracer.addEpoch("Spark Flex Logging");
     m_robotContainer.updateDashboardOutputs();
+    m_tracer.addEpoch("Smart Dashboard");
+    m_tracer.printEpochs();
   }
 
   @Override

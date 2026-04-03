@@ -122,11 +122,12 @@ public class Shooter extends SubsystemBase implements Testable {
   @Override
   public void periodic() {
 
-    if (kP.hasChanged() || kI.hasChanged() || kD.hasChanged()) {
-      shooterLeftMotorConfig.closedLoop.pid(kP.get(), kI.get(), kD.get());
-      m_shooterLeftMotor.configure(
-          shooterLeftMotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
-    }
+    // if (kP.hasChanged() || kI.hasChanged() || kD.hasChanged()) {
+    //   shooterLeftMotorConfig.closedLoop.pid(kP.get(), kI.get(), kD.get());
+    //   m_shooterLeftMotor.configure(
+    //       shooterLeftMotorConfig, ResetMode.kResetSafeParameters,
+    // PersistMode.kPersistParameters);
+    // }
 
     m_currentDistance =
         Aiming.calculateTagDistance(

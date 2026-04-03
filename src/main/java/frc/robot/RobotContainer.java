@@ -228,9 +228,17 @@ public class RobotContainer {
     //             edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kReverse));
 
     // Quarter Speed
-    m_driverController.R2().onTrue(Commands.runOnce(() -> m_robotSpeed = 0.25));
+    m_driverController
+        .R2()
+        .onTrue(
+            Commands.runOnce(() -> m_robotSpeed = 0.25)
+                .andThen(Commands.runOnce(() -> System.out.println("Enter slow mode"), null)));
 
-    m_driverController.R2().onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
+    m_driverController
+        .R2()
+        .onFalse(
+            Commands.runOnce(() -> m_robotSpeed = 1.0)
+                .andThen(Commands.runOnce(() -> System.out.println("Exit Slow Mode"), null)));
 
     m_driverController.cross().whileTrue(m_drivetrain.applyRequest(() -> m_brake));
 

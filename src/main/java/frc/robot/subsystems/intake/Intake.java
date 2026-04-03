@@ -105,11 +105,13 @@ public class Intake extends SubsystemBase implements Testable {
   public void runMotors(double leftIntakeMotorPower, double rightIntakeMotorPower) {
     m_intakeRightMotor.set(leftIntakeMotorPower);
     m_intakeLeftMotor.set(rightIntakeMotorPower);
-    ;
   }
 
   public void runSpinner(double power) {
     m_spinnerMotor.set(power);
+    if (power > 0) {
+      runMotors(IntakeConstants.INTAKE_MOTORS_DOWN_POWER, IntakeConstants.INTAKE_MOTORS_DOWN_POWER);
+    }
   }
 
   public void deployedPosition() {
