@@ -41,7 +41,6 @@ import frc.robot.subsystems.shooter.ShooterConstants;
 import frc.robot.util.DynamicAutoCreator;
 import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
-import frc.robot.util.logging.EnergyMonitor;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,7 +98,7 @@ public class RobotContainer {
       new Trigger(() -> Math.abs(m_driverController.getRightX()) > 0.1);
 
   // Power Distribution Hub
-  public EnergyMonitor energyMonitor = new EnergyMonitor();
+  // public EnergyMonitor energyMonitor = new EnergyMonitor();
 
   public RobotContainer() {
     setDefaultCommands();
@@ -392,13 +391,13 @@ public class RobotContainer {
   }
 
   public double getVelocityX() {
-    double input = m_driverController.getLeftY();
+    double input = -m_driverController.getLeftY();
     double limited = m_xLimiter.calculate(input);
     return limited * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
   }
 
   public double getVelocityY() {
-    double input = m_driverController.getLeftX();
+    double input = -m_driverController.getLeftX();
     double limited = m_yLimiter.calculate(input);
     return limited * DriveConstants.MAX_LINEAR_SPEED * m_robotSpeed;
   }
@@ -426,7 +425,7 @@ public class RobotContainer {
     SmartDashboard.putBoolean("Hub Active", HubStatus.isHubActive());
     SmartDashboard.putBoolean("Locked on to Hub", m_isLocked);
     SmartDashboard.putNumber("Time to Next Shift", HubStatus.timeToNextShift());
-    energyMonitor.update();
+    // energyMonitor.update();
   }
 
   public Command buildFullTestSequence() {

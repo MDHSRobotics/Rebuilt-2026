@@ -6,7 +6,6 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Meters;
 
-import com.ctre.phoenix6.HootAutoReplay;
 import com.ctre.phoenix6.SignalLogger;
 import com.pathplanner.lib.commands.FollowPathCommand;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -35,8 +34,8 @@ public class Robot extends TimedRobot {
   private boolean m_hasAppliedRobotRotation;
 
   /* log and replay timestamp and joystick data */
-  private final HootAutoReplay m_timeAndJoystickReplay =
-      new HootAutoReplay().withTimestampReplay().withJoystickReplay();
+  // private final HootAutoReplay m_timeAndJoystickReplay =
+  //     new HootAutoReplay().withTimestampReplay().withJoystickReplay();
 
   public Robot() {
     m_robotContainer = new RobotContainer();
@@ -87,7 +86,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotPeriodic() {
-    m_timeAndJoystickReplay.update();
+    // m_timeAndJoystickReplay.update();
     CommandScheduler.getInstance().run();
     m_matchTimePub.set(DriverStation.getMatchTime());
     LoggableSparkFlex.updateAll();

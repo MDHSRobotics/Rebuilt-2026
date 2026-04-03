@@ -132,7 +132,8 @@ public class DynamicAutoCreator {
         new SequentialCommandGroup(
             m_drivetrain.runOnce(() -> m_drivetrain.seedFieldCentric(Rotation2d.kZero)),
             m_drivetrain
-                .applyRequest(() -> m_drive.withVelocityX(1).withVelocityY(0).withRotationalRate(0))
+                .applyRequest(
+                    () -> m_drive.withVelocityX(-1).withVelocityY(0).withRotationalRate(0))
                 .withTimeout(1),
             m_drivetrain.applyRequest(() -> idle).withTimeout(0.5),
             createShootingAutoSequence());
