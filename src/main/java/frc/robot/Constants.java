@@ -25,6 +25,7 @@ public final class Constants {
     public static final int DRIVER_CONTROLLER_PORT = 0;
     public static final int OPERATOR_CONTROLLER_PORT = 1;
     public static final int DRIVER_CONTROLLER_RIGHT_AXIS = 4;
+    public static final int DRIVER_CONTROLLER_R2_AXIS = 3;
   }
 
   public static class VisionConstants {

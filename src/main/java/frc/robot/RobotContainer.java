@@ -95,7 +95,15 @@ public class RobotContainer {
   private final List<Testable> testableSubsystems = List.of(m_intake, m_hopper, m_shooter);
 
   private Trigger m_autoAlignCanceled =
-      new Trigger(() -> Math.abs(m_driverController.getRightX()) > 0.1);
+      new Trigger(
+          () ->
+              Math.abs(
+                      m_driverController.getRawAxis(
+                          ControllerConstants.DRIVER_CONTROLLER_RIGHT_AXIS))
+                  > 0.1);
+  private Trigger m_slowMode =
+      new Trigger(
+          () -> m_driverController.getRawAxis(ControllerConstants.DRIVER_CONTROLLER_R2_AXIS) > 0.5);
 
   // Power Distribution Hub
   // public EnergyMonitor energyMonitor = new EnergyMonitor();
@@ -227,18 +235,10 @@ public class RobotContainer {
     //         m_drivetrain.sysIdQuasistatic(
     //             edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction.kReverse));
 
-    // Quarter Speed
-    m_driverController
-        .R2()
-        .onTrue(
-            Commands.runOnce(() -> m_robotSpeed = 0.25)
-                .andThen(Commands.runOnce(() -> System.out.println("Enter slow mode"), null)));
+    // Half Speed
+    m_slowMode.onTrue(Commands.runOnce(() -> m_robotSpeed = 0.5));
 
-    m_driverController
-        .R2()
-        .onFalse(
-            Commands.runOnce(() -> m_robotSpeed = 1.0)
-                .andThen(Commands.runOnce(() -> System.out.println("Exit Slow Mode"), null)));
+    m_slowMode.onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
 
     m_driverController.cross().whileTrue(m_drivetrain.applyRequest(() -> m_brake));
 
@@ -287,7 +287,7 @@ public class RobotContainer {
                                 m_shooter.getYawRotationalRate()
                                     * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
                 .until(m_autoAlignCanceled));
-    m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = true));
+    m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
     m_autoAlignCanceled.onTrue(Commands.runOnce(() -> m_isLocked = false));
 
     // Face the Hub
