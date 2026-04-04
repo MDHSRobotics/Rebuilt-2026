@@ -55,7 +55,7 @@ public class TunerConstants {
 
   // The stator current at which the wheels start to slip;
   // This needs to be tuned to your individual robot
-  public static final Current kSlipCurrent = Amps.of(23.84);
+  public static final Current kSlipCurrent = Amps.of(35);
 
   // Initial configs for the drive and steer motors and the azimuth encoder; these
   // cannot be null.
@@ -65,9 +65,9 @@ public class TunerConstants {
       new TalonFXConfiguration()
           .withCurrentLimits(
               new CurrentLimitsConfigs()
-                  .withStatorCurrentLimit(Amps.of(50))
+                  .withStatorCurrentLimit(Amps.of(70))
                   .withStatorCurrentLimitEnable(true)
-                  .withSupplyCurrentLimit(Amps.of(35))
+                  .withSupplyCurrentLimit(Amps.of(60))
                   .withSupplyCurrentLimitEnable(true))
           .withOpenLoopRamps(new OpenLoopRampsConfigs().withDutyCycleOpenLoopRampPeriod(0.25))
           .withClosedLoopRamps(
@@ -77,9 +77,9 @@ public class TunerConstants {
       new TalonFXConfiguration()
           .withCurrentLimits(
               new CurrentLimitsConfigs()
-                  .withStatorCurrentLimit(Amps.of(50))
+                  .withStatorCurrentLimit(Amps.of(70))
                   .withStatorCurrentLimitEnable(true)
-                  .withSupplyCurrentLimit(Amps.of(25))
+                  .withSupplyCurrentLimit(Amps.of(60))
                   .withSupplyCurrentLimitEnable(true));
   private static final CANcoderConfiguration encoderInitialConfigs = new CANcoderConfiguration();
   // Configs for the Pigeon 2; leave this null to skip applying Pigeon 2 configs

@@ -104,6 +104,7 @@ public class RobotContainer {
   private Trigger m_slowMode =
       new Trigger(
           () -> m_driverController.getRawAxis(ControllerConstants.DRIVER_CONTROLLER_R2_AXIS) > 0.5);
+  private Trigger m_lockWheels = new Trigger(() -> m_driverController.getRawAxis(2) > 0.5);
 
   // Power Distribution Hub
   // public EnergyMonitor energyMonitor = new EnergyMonitor();
@@ -242,7 +243,10 @@ public class RobotContainer {
 
     m_slowMode.onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
 
-    m_driverController.cross().toggleOnTrue(m_drivetrain.applyRequest(() -> m_brake));
+    m_lockWheels.whileTrue(
+        m_drivetrain
+            .applyRequest(() -> m_brake)
+            .andThen(Commands.runOnce(() -> System.out.println("Locking Wheels"))));
 
     // Reset the field-centric heading on option press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
