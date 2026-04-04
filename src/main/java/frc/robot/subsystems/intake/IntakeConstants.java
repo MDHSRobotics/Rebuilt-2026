@@ -48,7 +48,7 @@ public class IntakeConstants extends SubsystemBase {
   public static final double INTAKE_SPINNERS_POWER = 0.8;
 
   /* Default down power */
-  public static final double INTAKE_MOTORS_DOWN_POWER = 0.05;
+  public static final double INTAKE_MOTORS_DOWN_POWER = 0.08;
 
   /** Testing Variables */
   public static final double TEST_POWER = 0.5;

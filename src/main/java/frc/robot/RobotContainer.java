@@ -50,6 +50,11 @@ public class RobotContainer {
   private double m_testShooterRPM = 2500;
   private boolean m_isLocked = false;
 
+  private final Shooter m_shooter = new Shooter();
+  private final Intake m_intake = new Intake();
+  private final Hopper m_hopper = new Hopper();
+  private final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
+
   /* Setting up bindings for necessary control of the swerve drive platform */
   private final SwerveRequest.FieldCentric m_drive =
       new SwerveRequest.FieldCentric()
@@ -59,13 +64,9 @@ public class RobotContainer {
               DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
   private final SwerveRequest.SwerveDriveBrake m_brake =
       new SwerveRequest.SwerveDriveBrake()
-          .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+          .withDriveRequestType(DriveRequestType.Velocity)
           .withSteerRequestType(com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType.Position);
 
-  private final Shooter m_shooter = new Shooter();
-  private final Intake m_intake = new Intake();
-  private final Hopper m_hopper = new Hopper();
-  private final CommandSwerveDrivetrain m_drivetrain = TunerConstants.createDrivetrain();
   private final AimingCommand m_AimingCommand =
       new AimingCommand(
           m_drivetrain, () -> getVelocityX(), () -> getVelocityY(), () -> getDeadband());
@@ -136,6 +137,8 @@ public class RobotContainer {
         "Shooting only", m_dynamicAutoCreator.createShootingAutoSequence());
     m_staticAutoChooser.addOption(
         "Middle Shooting", m_dynamicAutoCreator.createMiddleShootingAutoSequence());
+    m_staticAutoChooser.addOption(
+        "Middle Shooting and to ramp", m_dynamicAutoCreator.createMiddleShootingRampAutoSequence());
 
     // Publish the auto command chooser to the dashboard
     SmartDashboard.putData("Static auto commands", m_staticAutoChooser);
@@ -239,7 +242,7 @@ public class RobotContainer {
 
     m_slowMode.onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
 
-    m_driverController.button(1).whileTrue(m_drivetrain.applyRequest(() -> m_brake));
+    m_driverController.cross().toggleOnTrue(m_drivetrain.applyRequest(() -> m_brake));
 
     // Reset the field-centric heading on option press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));

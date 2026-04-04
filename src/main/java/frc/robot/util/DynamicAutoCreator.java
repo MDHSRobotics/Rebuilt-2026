@@ -134,9 +134,27 @@ public class DynamicAutoCreator {
             m_drivetrain
                 .applyRequest(
                     () -> m_drive.withVelocityX(-1).withVelocityY(0).withRotationalRate(0))
-                .withTimeout(1),
+                .withTimeout(1.5),
             m_drivetrain.applyRequest(() -> idle).withTimeout(0.5),
             createShootingAutoSequence());
+    return auto_command;
+  }
+
+  public Command createMiddleShootingRampAutoSequence() {
+    final var idle = new SwerveRequest.Idle();
+    Command auto_command =
+        new SequentialCommandGroup(
+            m_drivetrain.runOnce(() -> m_drivetrain.seedFieldCentric(Rotation2d.kZero)),
+            m_drivetrain
+                .applyRequest(
+                    () -> m_drive.withVelocityX(-1).withVelocityY(0).withRotationalRate(0))
+                .withTimeout(1),
+            m_drivetrain.applyRequest(() -> idle).withTimeout(0.5),
+            // createShootingAutoSequence(),
+            m_drivetrain
+                .applyRequest(() -> m_drive.withVelocityX(0).withVelocityY(1).withRotationalRate(0))
+                .withTimeout(2.5));
+
     return auto_command;
   }
 
