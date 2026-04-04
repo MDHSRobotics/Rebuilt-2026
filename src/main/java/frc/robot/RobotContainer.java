@@ -5,7 +5,6 @@
 package frc.robot;
 
 import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType;
 import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
@@ -60,8 +59,8 @@ public class RobotContainer {
               DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
   private final SwerveRequest.SwerveDriveBrake m_brake =
       new SwerveRequest.SwerveDriveBrake()
-          .withDriveRequestType(DriveRequestType.Velocity)
-          .withSteerRequestType(SteerRequestType.Position);
+          .withDriveRequestType(DriveRequestType.OpenLoopVoltage)
+          .withSteerRequestType(com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType.Position);
 
   private final Shooter m_shooter = new Shooter();
   private final Intake m_intake = new Intake();
@@ -240,7 +239,7 @@ public class RobotContainer {
 
     m_slowMode.onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
 
-    m_driverController.cross().whileTrue(m_drivetrain.applyRequest(() -> m_brake));
+    m_driverController.button(1).whileTrue(m_drivetrain.applyRequest(() -> m_brake));
 
     // Reset the field-centric heading on option press.
     m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
