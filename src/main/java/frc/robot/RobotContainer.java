@@ -61,7 +61,7 @@ public class RobotContainer {
   private final SwerveRequest.SwerveDriveBrake m_brake =
       new SwerveRequest.SwerveDriveBrake()
           .withDriveRequestType(DriveRequestType.Velocity)
-          .withSteerRequestType(SteerRequestType.MotionMagicExpo);
+          .withSteerRequestType(SteerRequestType.Position);
 
   private final Shooter m_shooter = new Shooter();
   private final Intake m_intake = new Intake();
