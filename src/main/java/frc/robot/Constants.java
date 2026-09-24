@@ -10,6 +10,7 @@ import edu.wpi.first.math.Vector;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.wpilibj.RobotBase;
 
 public final class Constants {
   private Constants() {}
@@ -18,6 +19,28 @@ public final class Constants {
   public static final double UPDATE_PERIOD = 0.02;
 
   public static final boolean TUNING_MODE = false;
+
+  /**
+   * This class defines the runtime mode used by AdvantageKit. The mode is always "real" when
+   * running on a roboRIO. Change the value of "simMode" to switch between "sim" (physics sim) and
+   * "replay" (log replay from a file).
+   */
+  public static final Mode simMode = Mode.SIM;
+
+  public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+
+  // public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : Mode.REPLAY;
+
+  public static enum Mode {
+    /** Running on a real robot. */
+    REAL,
+
+    /** Running a physics simulator. */
+    SIM,
+
+    /** Replaying from a log file. */
+    REPLAY
+  }
 
   public static class ControllerConstants {
     private ControllerConstants() {}
