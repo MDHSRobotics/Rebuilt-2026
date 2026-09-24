@@ -48,13 +48,21 @@ public class DriveConstants {
               FRONT_LEFT_AND_FRONT_RIGHT_CANCODER_DISTANCE.div(2.0).in(Inches),
               FRONT_LEFT_AND_BACK_LEFT_CANCODER_DISTANCE.div(2.0).in(Inches)));
 
+  /** Maximum distance from the robot origin to any swerve module. */
+  public static final double DRIVE_BASE_RADIUS =
+      Math.max(
+          Math.max(
+              Math.hypot(TunerConstants.FrontLeft.LocationX, TunerConstants.FrontLeft.LocationY),
+              Math.hypot(TunerConstants.FrontRight.LocationX, TunerConstants.FrontRight.LocationY)),
+          Math.max(
+              Math.hypot(TunerConstants.BackLeft.LocationX, TunerConstants.BackLeft.LocationY),
+              Math.hypot(TunerConstants.BackRight.LocationX, TunerConstants.BackRight.LocationY)));
+
   /** Robot Max Linear Velocity in mph */
   public static final double MAX_LINEAR_SPEED = TunerConstants.kSpeedAt12Volts.in(MetersPerSecond);
 
   /** Robot Max Angular Velocity in rad per sec */
-  public static final double MAX_ANGULAR_VELOCITY =
-      RotationsPerSecond.of(MAX_LINEAR_SPEED / CENTER_OF_ROBOT_TO_CANCODER_DISTANCE.in(Meters))
-          .in(RadiansPerSecond);
+  public static final double MAX_ANGULAR_VELOCITY = MAX_LINEAR_SPEED / DRIVE_BASE_RADIUS;
 
   /** Maximum angular acceleration used by heading controllers, in rad/sec^2. */
   public static final double MAX_ANGULAR_ACCELERATION = 20.0;
