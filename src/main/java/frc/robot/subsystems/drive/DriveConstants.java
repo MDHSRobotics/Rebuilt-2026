@@ -56,6 +56,9 @@ public class DriveConstants {
       RotationsPerSecond.of(MAX_LINEAR_SPEED / CENTER_OF_ROBOT_TO_CANCODER_DISTANCE.in(Meters))
           .in(RadiansPerSecond);
 
+  /** Maximum angular acceleration used by heading controllers, in rad/sec^2. */
+  public static final double MAX_ANGULAR_ACCELERATION = 20.0;
+
   public static final double MAX_TELEOP_ANGULAR_VELOCITY = 8.77; // rad/s
 
   /**

@@ -4,13 +4,14 @@
 
 package frc.robot;
 
-import com.ctre.phoenix6.swerve.SwerveModule.DriveRequestType;
-import com.ctre.phoenix6.swerve.SwerveRequest;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.auto.NamedCommands;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -23,19 +24,18 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandPS4Controller;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Constants.ControllerConstants;
 import frc.robot.commands.AimingCommand;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.subsystems.drive.DriveTelemetry;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIOPigeon2;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOTalonFX;
 import frc.robot.subsystems.drive.TunerConstants;
-import frc.robot.subsystems.drive.DriveConstants;
-import frc.robot.subsystems.drive.DriveTelemetry;
 import frc.robot.subsystems.hopper.Hopper;
 import frc.robot.subsystems.hopper.HopperConstants.HopperPowers;
 import frc.robot.subsystems.intake.Intake;
@@ -61,28 +61,15 @@ public class RobotContainer {
   private final Drive m_drivetrain;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
-  private final SwerveRequest.FieldCentric m_drive =
-      new SwerveRequest.FieldCentric()
-          .withDeadband(getDeadband())
-          .withRotationalDeadband(getRotationalDeadband())
-          .withDriveRequestType(
-              DriveRequestType.OpenLoopVoltage); // Use open-loop control for drive motors
-  private final SwerveRequest.SwerveDriveBrake m_brake =
-      new SwerveRequest.SwerveDriveBrake()
-          .withDriveRequestType(DriveRequestType.Velocity)
-          .withSteerRequestType(com.ctre.phoenix6.swerve.SwerveModule.SteerRequestType.Position);
 
-  private final AimingCommand m_AimingCommand =
-      new AimingCommand(
-          m_drivetrain, () -> getVelocityX(), () -> getVelocityY(), () -> getDeadband());
+  private final AimingCommand m_AimingCommand;
 
   // Autonomous Chooser - A set of options for specifying the active autonomous command from a
   // dashboard like Elastic
   private SendableChooser<Command> m_staticAutoChooser;
 
   /* Autonomous Creator - This dynamically creates commands based on settings in the Elastic Auto tab */
-  private final DynamicAutoCreator m_dynamicAutoCreator =
-      new DynamicAutoCreator(this::resetFieldPosition, m_shooter, m_hopper, m_drivetrain);
+  private final DynamicAutoCreator m_dynamicAutoCreator;
 
   private final DriveTelemetry m_logger = new DriveTelemetry(DriveConstants.MAX_LINEAR_SPEED);
 
@@ -116,7 +103,8 @@ public class RobotContainer {
 
   public RobotContainer() {
 
-    // Set up the drive based on whether we have a real robot, are simulating, or replaying a log file
+    // Set up the drive based on whether we have a real robot, are simulating, or replaying a log
+    // file
     switch (Constants.currentMode) {
       case REAL:
         m_drivetrain =
@@ -152,15 +140,19 @@ public class RobotContainer {
         throw new IllegalStateException("Unknown robot mode: " + Constants.currentMode);
     }
 
+    m_AimingCommand =
+        new AimingCommand(
+            m_drivetrain, () -> getVelocityX(), () -> getVelocityY(), () -> getDeadband());
 
-
+    m_dynamicAutoCreator =
+        new DynamicAutoCreator(this::resetFieldPosition, m_shooter, m_hopper, m_drivetrain);
 
     setDefaultCommands();
     configureDriverControllers();
     configureOperatorControllers();
     registerNamedCommands();
     setupAutoCommandOptions();
-    m_drivetrain.registerTelemetry(m_logger::telemeterize);
+    // m_drivetrain.registerTelemetry(m_logger::telemeterize);
   }
 
   /* Define the possible auto command options that can be chosen from the dashboard.
@@ -202,30 +194,35 @@ public class RobotContainer {
 
   // Named Commands for Autonomous
   private void registerNamedCommands() {
+
     NamedCommands.registerCommand(
         "Ramp Up Shooter", Commands.run(() -> m_shooter.rampUpShooter(), m_shooter).withTimeout(2));
+
     NamedCommands.registerCommand(
         "Shoot Balls",
         new ParallelCommandGroup(
             Commands.run(() -> m_shooter.shootBall(), m_shooter).withTimeout(6),
             Commands.run(() -> m_hopper.runHopper(HopperPowers.SHOOT), m_hopper).withTimeout(6)));
+
     NamedCommands.registerCommand(
         "Deploy Intake", Commands.run(() -> m_intake.runMotors(0.5, 0.5), m_intake).withTimeout(1));
+
     NamedCommands.registerCommand(
         "Intake Balls",
         Commands.run(() -> m_intake.runSpinner(IntakeConstants.INTAKE_SPINNERS_POWER), m_intake)
             .withTimeout(4));
+
     NamedCommands.registerCommand(
         "Lock on to Hub",
-        m_drivetrain
-            .applyRequest(
+        Commands.run(
                 () ->
-                    m_drive
-                        .withVelocityX(0)
-                        .withVelocityY(0)
-                        .withRotationalRate(
+                    m_drivetrain.runVelocity(
+                        new ChassisSpeeds(
+                            0.0,
+                            0.0,
                             m_shooter.getYawRotationalRate()
-                                * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
+                                * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY)),
+                m_drivetrain)
             .withTimeout(2));
   }
 
@@ -233,20 +230,30 @@ public class RobotContainer {
     // Note that X is defined as forward according to WPILib convention,
     // and Y is defined as to the left according to WPILib convention.
     m_drivetrain.setDefaultCommand(
-        // Drivetrain will execute this command periodically
-        m_drivetrain.applyRequest(
-            () ->
-                m_drive
-                    .withVelocityX(getVelocityX())
-                    .withVelocityY(getVelocityY())
-                    .withRotationalRate(getRotationalRate())
-                    .withRotationalDeadband(getRotationalDeadband())));
+        Commands.run(
+            () -> {
+              double vx = applyDriveDeadband(getVelocityX());
+              double vy = applyDriveDeadband(getVelocityY());
+              double omega = applyRotationalDeadband(getRotationalRate());
+
+              Rotation2d fieldRelativeRotation = m_drivetrain.getRotation();
+
+              // Maintain driver perspective on the red alliance.
+              if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
+                fieldRelativeRotation = fieldRelativeRotation.plus(Rotation2d.fromDegrees(180.0));
+              }
+
+              m_drivetrain.runVelocity(
+                  ChassisSpeeds.fromFieldRelativeSpeeds(vx, vy, omega, fieldRelativeRotation));
+            },
+            m_drivetrain));
 
     // Idle while the robot is disabled. This ensures the configured
     // neutral mode is applied to the drive motors while disabled.
-    final var idle = new SwerveRequest.Idle();
-    RobotModeTriggers.disabled()
-        .whileTrue(m_drivetrain.applyRequest(() -> idle).ignoringDisable(true));
+    // No need for the following idle code because it is done in Drive.periodic() and Module.stop()
+    // final var idle = new SwerveRequest.Idle();
+    // RobotModeTriggers.disabled()
+    //    .whileTrue(m_drivetrain.applyRequest(() -> idle).ignoringDisable(true));
 
     // Subsystem Defaults
     m_shooter.setDefaultCommand(new RunCommand(() -> m_shooter.stopMotors(), m_shooter));
@@ -289,12 +296,11 @@ public class RobotContainer {
     m_slowMode.onFalse(Commands.runOnce(() -> m_robotSpeed = 1.0));
 
     m_lockWheels.whileTrue(
-        m_drivetrain
-            .applyRequest(() -> m_brake)
+        Commands.runOnce(m_drivetrain::stopWithX, m_drivetrain)
             .andThen(Commands.runOnce(() -> System.out.println("Locking Wheels"))));
 
     // Reset the field-centric heading on option press.
-    m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
+    // m_driverController.options().onTrue(m_drivetrain.runOnce(m_drivetrain::seedFieldCentric));
 
     m_driverController
         .circle()
@@ -328,15 +334,27 @@ public class RobotContainer {
     m_driverController
         .triangle()
         .toggleOnTrue(
-            m_drivetrain
-                .applyRequest(
-                    () ->
-                        m_drive
-                            .withVelocityX(getVelocityX())
-                            .withVelocityY(getVelocityY())
-                            .withRotationalRate(
-                                m_shooter.getYawRotationalRate()
-                                    * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY))
+            Commands.run(
+                    () -> {
+                      double vx = getVelocityX();
+                      double vy = getVelocityY();
+                      double omega =
+                          m_shooter.getYawRotationalRate()
+                              * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY;
+
+                      Rotation2d fieldRelativeRotation = m_drivetrain.getRotation();
+
+                      // Maintain driver perspective on both alliances
+                      if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
+                        fieldRelativeRotation =
+                            fieldRelativeRotation.plus(Rotation2d.fromDegrees(180.0));
+                      }
+
+                      m_drivetrain.runVelocity(
+                          ChassisSpeeds.fromFieldRelativeSpeeds(
+                              vx, vy, omega, fieldRelativeRotation));
+                    },
+                    m_drivetrain)
                 .until(m_autoAlignCanceled));
     m_driverController.triangle().onTrue(Commands.runOnce(() -> m_isLocked = !m_isLocked));
     m_autoAlignCanceled.onTrue(Commands.runOnce(() -> m_isLocked = false));
@@ -467,12 +485,20 @@ public class RobotContainer {
     return limited * DriveConstants.MAX_TELEOP_ANGULAR_VELOCITY * m_robotSpeed;
   }
 
+  private double applyDriveDeadband(double velocity) {
+    return Math.abs(velocity) < getDeadband() ? 0.0 : velocity;
+  }
+
+  private double applyRotationalDeadband(double rate) {
+    return Math.abs(rate) < getRotationalDeadband() ? 0.0 : rate;
+  }
+
   public void resetFieldPosition(Pose2d position) {
-    m_drivetrain.resetPose(position);
+    m_drivetrain.setPose(position);
   }
 
   public void resetRobotRotation(Rotation2d rotation) {
-    m_drivetrain.resetRotation(rotation);
+    m_drivetrain.setPose(new Pose2d(m_drivetrain.getPose().getTranslation(), rotation));
   }
 
   public void changeTestRpm(double val) {
