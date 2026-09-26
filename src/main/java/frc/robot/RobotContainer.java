@@ -42,6 +42,14 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.shooter.Shooter;
 import frc.robot.subsystems.shooter.ShooterConstants;
+import frc.robot.subsystems.vision.CameraSpec;
+import frc.robot.subsystems.vision.FieldVision;
+import frc.robot.subsystems.vision.FieldVisionConstants;
+import frc.robot.subsystems.vision.FieldVisionIO;
+import frc.robot.subsystems.vision.FieldVisionIOLimelight;
+import frc.robot.subsystems.vision.FieldVisionIOPhotonVision;
+import frc.robot.subsystems.vision.FieldVisionIOPhotonVisionSim;
+import frc.robot.subsystems.vision.FieldVisionIOReplayable;
 import frc.robot.util.DynamicAutoCreator;
 import frc.robot.util.HubStatus;
 import frc.robot.util.Testable;
@@ -59,6 +67,7 @@ public class RobotContainer {
   private final Intake m_intake = new Intake();
   private final Hopper m_hopper = new Hopper();
   private final Drive m_drivetrain;
+  private final FieldVision m_fieldVision;
 
   /* Setting up bindings for necessary control of the swerve drive platform */
 
@@ -103,42 +112,11 @@ public class RobotContainer {
 
   public RobotContainer() {
 
-    // Set up the drive based on whether we have a real robot, are simulating, or replaying a log
-    // file
-    switch (Constants.currentMode) {
-      case REAL:
-        m_drivetrain =
-            new Drive(
-                new GyroIOPigeon2(),
-                new ModuleIOTalonFX(TunerConstants.FrontLeft),
-                new ModuleIOTalonFX(TunerConstants.FrontRight),
-                new ModuleIOTalonFX(TunerConstants.BackLeft),
-                new ModuleIOTalonFX(TunerConstants.BackRight));
-        break;
+    // Initialize the swerve drive
+    m_drivetrain = initializeDrive();
 
-      case SIM:
-        m_drivetrain =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIOSim(TunerConstants.FrontLeft),
-                new ModuleIOSim(TunerConstants.FrontRight),
-                new ModuleIOSim(TunerConstants.BackLeft),
-                new ModuleIOSim(TunerConstants.BackRight));
-        break;
-
-      case REPLAY:
-        m_drivetrain =
-            new Drive(
-                new GyroIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {},
-                new ModuleIO() {});
-        break;
-
-      default:
-        throw new IllegalStateException("Unknown robot mode: " + Constants.currentMode);
-    }
+    // Initialize the field vision
+    m_fieldVision = initializeFieldVision(m_drivetrain);
 
     m_AimingCommand =
         new AimingCommand(
@@ -153,6 +131,106 @@ public class RobotContainer {
     registerNamedCommands();
     setupAutoCommandOptions();
     // m_drivetrain.registerTelemetry(m_logger::telemeterize);
+  }
+
+  private Drive initializeDrive() {
+
+    // Set up the drive based on whether we have a real robot, are simulating, or replaying a log
+    // file
+    Drive drive;
+
+    switch (Constants.currentMode) {
+      case REAL:
+        drive =
+            new Drive(
+                new GyroIOPigeon2(),
+                new ModuleIOTalonFX(TunerConstants.FrontLeft),
+                new ModuleIOTalonFX(TunerConstants.FrontRight),
+                new ModuleIOTalonFX(TunerConstants.BackLeft),
+                new ModuleIOTalonFX(TunerConstants.BackRight));
+        break;
+
+      case SIM:
+        drive =
+            new Drive(
+                new GyroIO() {},
+                new ModuleIOSim(TunerConstants.FrontLeft),
+                new ModuleIOSim(TunerConstants.FrontRight),
+                new ModuleIOSim(TunerConstants.BackLeft),
+                new ModuleIOSim(TunerConstants.BackRight));
+        break;
+
+      case REPLAY:
+        drive =
+            new Drive(
+                new GyroIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {},
+                new ModuleIO() {});
+        break;
+
+      default:
+        throw new IllegalStateException("Unknown robot mode: " + Constants.currentMode);
+    }
+
+    return drive;
+  }
+
+  private FieldVision initializeFieldVision(Drive drive) {
+
+    CameraSpec[] cameraSpecArray = FieldVisionConstants.robotCameras;
+    List<FieldVisionIO> fieldVisionIoList = new ArrayList<>();
+
+    for (int i = 0; i < cameraSpecArray.length; i++) {
+
+      switch (Constants.currentMode) {
+        case REAL:
+          // We are running with a real robot
+          switch (cameraSpecArray[i].visionType) {
+            case LIMELIGHT:
+              fieldVisionIoList.add(
+                  new FieldVisionIOLimelight(cameraSpecArray[i].cameraName, drive::getRotation));
+              break;
+
+            case PHOTONVISION:
+              fieldVisionIoList.add(
+                  new FieldVisionIOPhotonVision(
+                      cameraSpecArray[i].cameraName, cameraSpecArray[i].robotToCamera));
+              break;
+
+            default:
+              throw new IllegalArgumentException(
+                  "Unknown vision type "
+                      + cameraSpecArray[i].visionType
+                      + " for camera "
+                      + cameraSpecArray[i].cameraName);
+          }
+          break;
+
+        case SIM:
+          // In pure simulation mode always use PhotonVisionSim
+          // even if this is a Limelight because we cannot simulate Limelights
+          fieldVisionIoList.add(
+              new FieldVisionIOPhotonVisionSim(
+                  cameraSpecArray[i].cameraName, cameraSpecArray[i].robotToCamera, drive::getPose));
+          break;
+
+        case REPLAY:
+          // Replaying a log file so create a dummy camera with the proper name
+          fieldVisionIoList.add(new FieldVisionIOReplayable(cameraSpecArray[i].cameraName));
+          break;
+
+        default:
+          throw new IllegalStateException("Unknown robot mode: " + Constants.currentMode);
+      }
+    }
+
+    FieldVision fieldVision =
+        new FieldVision(
+            m_drivetrain::addVisionMeasurement, fieldVisionIoList.toArray(FieldVisionIO[]::new));
+
+    return fieldVision;
   }
 
   /* Define the possible auto command options that can be chosen from the dashboard.

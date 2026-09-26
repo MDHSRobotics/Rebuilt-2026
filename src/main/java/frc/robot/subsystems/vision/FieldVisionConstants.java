@@ -44,8 +44,7 @@ public class FieldVisionConstants {
             Constants.VisionConstants.FRONT_LIMELIGHT_FORWARD_DISTANCE,
             0.0,
             Constants.VisionConstants.FRONT_LIMELIGHT_UP_DISTANCE,
-            new Rotation3d(
-                0.0, Math.toRadians(Constants.VisionConstants.FRONT_LIMELIGHT_PITCH), 0.0)))
+            new Rotation3d(0.0, -0.4, 0.0)))
   };
 
   // The following is a definition of all cameras on a test harness used to testing
